@@ -164,6 +164,8 @@ export const MOB_ICON_MAP: Record<string, string> = {
   火焰半人馬: 'Mob_Red_Kentaurus.png',
   暗黑半人馬: 'Mob_Black_Kentaurus.png',
   短毛牛: 'Mob_Hankie.png',
+  邪惡綿羊: 'Mob_Birk.png',
+  雙角邪惡綿羊: 'Mob_Dual_Birk.png',
   赤翼龍: 'Mob_Red_Wyvern.png',
   藍翼龍: 'Mob_Blue_Wyvern.png',
   黑翼龍: 'Mob_Dark_Wyvern.png',
@@ -180,7 +182,14 @@ export const MOB_ICON_MAP: Record<string, string> = {
   忘卻神官: 'Mob_Oblivion_Monk.png',
   悔恨神官: 'Mob_Qualm_Monk.png',
 
-  // === 埃德爾斯坦 / 台灣專屬 / 特殊怪 ===
+  // === 埃德爾斯坦 / 瑪迦提亞城 / 台灣專屬 / 特殊怪 ===
+  葡萄酒瓶: 'Mob_Grape_Juice_Bottle.png',
+  葡萄汁瓶: 'Mob_Grape_Juice_Bottle.png',
+  鋼鐵穆太: 'Mob_Iron_Mutae.png',
+  強化鋼鐵穆太: 'Mob_Reinforced_Iron_Mutae.png',
+  秘銀穆太: 'Mob_Mithril_Mutae.png',
+  垃圾桶: 'Mob_Trash_Can.png',
+  變身垃圾桶: 'Mob_Trash_Can.png',
   雷普士兵: 'Mob_Flora_Soldier.png',
   沼澤爛泥怪物: 'Mob_Muddy_Sprout_Monster.png',
   竊水賊: 'Mob_Water_Thief_Monster.png',
