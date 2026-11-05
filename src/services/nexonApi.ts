@@ -4,6 +4,7 @@ import type {
   CharacterBasic,
   CharacterBeautyEquipment,
   CharacterCashItemEquipment,
+  CharacterFamiliar,
   CharacterHexaMatrix,
   CharacterHexaMatrixStat,
   CharacterHyperStat,
@@ -205,7 +206,7 @@ export async function fetchFullCharacterProfile(options: {
 
     await sleep(950)
 
-    const [cashEquipment, beautyEquipment, popularity, union, unionChampion, unionRaider] =
+    const [cashEquipment, beautyEquipment, familiar, popularity, union, unionChampion, unionRaider] =
       await Promise.all([
         safeFetch(() =>
           fetchNexonEndpoint<CharacterCashItemEquipment>(
@@ -217,6 +218,13 @@ export async function fetchFullCharacterProfile(options: {
         safeFetch(() =>
           fetchNexonEndpoint<CharacterBeautyEquipment>(
             `${prefix}/character/beauty-equipment`,
+            queryParams,
+            apiKey
+          )
+        ),
+        safeFetch(() =>
+          fetchNexonEndpoint<CharacterFamiliar>(
+            `${prefix}/character/familiar`,
             queryParams,
             apiKey
           )
@@ -253,6 +261,7 @@ export async function fetchFullCharacterProfile(options: {
       cashEquipment,
       beautyEquipment,
       symbolEquipment,
+      familiar,
       hexaMatrix,
       hexaMatrixStat,
       union,
@@ -274,6 +283,7 @@ export async function fetchFullCharacterProfile(options: {
     cashEquipment,
     beautyEquipment,
     symbolEquipment,
+    familiar,
     hexaMatrix,
     hexaMatrixStat,
     union,
@@ -336,6 +346,13 @@ export async function fetchFullCharacterProfile(options: {
       )
     ),
     safeFetch(() =>
+      fetchNexonEndpoint<CharacterFamiliar>(
+        `${prefix}/character/familiar`,
+        queryParams,
+        apiKey
+      )
+    ),
+    safeFetch(() =>
       fetchNexonEndpoint<CharacterHexaMatrix>(
         `${prefix}/character/hexamatrix`,
         queryParams,
@@ -372,6 +389,7 @@ export async function fetchFullCharacterProfile(options: {
     cashEquipment,
     beautyEquipment,
     symbolEquipment,
+    familiar,
     hexaMatrix,
     hexaMatrixStat,
     union,
@@ -1385,6 +1403,42 @@ export function getDemoCharacterProfile(region: GameRegion = 'maplestorytw'): Fu
       preset_hexa_stat_core: [],
       preset_hexa_stat_core_2: [],
       preset_hexa_stat_core_3: [],
+    },
+    familiar: {
+      date: '2026-11-03T00:00+08:00',
+      character_class: '阿戴爾',
+      familiar: [
+        {
+          familiar_name: '巨大巴洛古',
+          familiar_grade: '傳說',
+          familiar_level: 7,
+          familiar_icon: 'https://open.api.nexon.com/static/maplestory/ItemIcon/KEODLEOD.png',
+          familiar_description: '散發出強大威壓感的古老魔族，擁有極高的攻擊破壞力。',
+          familiar_option_1: 'BOSS 怪物攻擊時傷害增加 +40%',
+          familiar_option_2: '無視怪物防禦力 +35%',
+          familiar_option_3: '最大 HP +8%',
+        },
+        {
+          familiar_name: '露希妲',
+          familiar_grade: '傳說',
+          familiar_level: 7,
+          familiar_icon: 'https://open.api.nexon.com/static/maplestory/ItemIcon/KEODLEOF.png',
+          familiar_description: '操控噩夢與幻想之蝶的軍團長，支配著夢之都拉契爾恩。',
+          familiar_option_1: 'BOSS 怪物攻擊時傷害增加 +40%',
+          familiar_option_2: '物理攻擊力 +9%',
+          familiar_option_3: '魔法攻擊力 +9%',
+        },
+        {
+          familiar_name: '西格諾斯',
+          familiar_grade: '傳說',
+          familiar_level: 7,
+          familiar_icon: 'https://open.api.nexon.com/static/maplestory/ItemIcon/KEODLEOG.png',
+          familiar_description: '耶雷弗的女皇與神獸守護者，擁有神聖且純粹的守護光芒。',
+          familiar_option_1: '無視怪物防禦力 +40%',
+          familiar_option_2: '所有屬性增加 +7%',
+          familiar_option_3: '攻擊時有 15% 機率恢復 HP 95',
+        },
+      ],
     },
   }
 }

@@ -38,7 +38,7 @@ const activeTab = ref<'stats' | 'equipment' | 'hexa' | 'card' | 'doll' | 'union'
 const hexaCalcScope = ref<'current10' | 'full11' | 'unlocked'>('current10')
 const hexaStatViewMode = ref<'equipped' | 'preset'>('equipped')
 const customHexaLevelOverrides = ref<Record<string, number>>({})
-const equipMainTab = ref<'equip' | 'pet'>('equip')
+const equipMainTab = ref<'equip' | 'pet' | 'familiar'>('equip')
 const equipViewMode = ref<'equipment' | 'coordination'>('equipment')
 const activeSymbolTab = ref<'arcane' | 'authentic'>('arcane')
 const isGrandAuthentic = ref<boolean>(false)
@@ -945,6 +945,55 @@ const petDisplayList = computed(() => {
   })
 })
 
+// 萌獸 (Familiar) 資料轉換
+const familiarDisplayList = computed(() => {
+  const famData = profile.value?.familiar
+  if (!famData) return []
+  const list = famData.familiar || []
+  if (list.length === 0) return []
+
+  return list.map((fam, idx) => {
+    const opts = [
+      fam.familiar_option_1 || fam.option_1,
+      fam.familiar_option_2 || fam.option_2,
+      fam.familiar_option_3 || fam.option_3,
+    ].filter(Boolean) as string[]
+
+    const grade = fam.familiar_grade || '普通'
+    const lv = fam.familiar_level || 1
+
+    const descLines: string[] = []
+    descLines.push(`階級：${grade}`)
+    descLines.push(`等級：Lv.${lv}`)
+    if (fam.familiar_skill) descLines.push(`萌獸技能：${fam.familiar_skill}`)
+    if (fam.familiar_description) descLines.push(fam.familiar_description)
+
+    const equipItem = makeEmptyEquipmentItem({
+      item_equipment_part: `萌獸 (Slot ${idx + 1})`,
+      item_equipment_slot: `萌獸${idx + 1}`,
+      item_name: fam.familiar_name,
+      item_icon: fam.familiar_icon || makeBeautyMannequinSvg('hair'),
+      item_description: descLines.join('\n'),
+    })
+    equipItem.potential_option_grade = grade
+    equipItem.potential_option_1 = opts[0] || null
+    equipItem.potential_option_2 = opts[1] || null
+    equipItem.potential_option_3 = opts[2] || null
+
+    return {
+      slot: idx + 1,
+      name: fam.familiar_name,
+      grade,
+      level: lv,
+      icon: fam.familiar_icon,
+      options: opts,
+      description: fam.familiar_description,
+      skill: fam.familiar_skill,
+      itemInfo: equipItem,
+    }
+  })
+})
+
 // 符文裝備 (ARCANE / AUTHENTIC) 仿遊戲內 3x2 視窗資料
 const symbolBoardData = computed(() => {
   const symbols = profile.value?.symbolEquipment?.symbol || []
@@ -1551,6 +1600,16 @@ const hexaStatSlotsDisplay = computed(() => {
               <span class="mini-label">聯盟神器</span>
               <span class="mini-value">Lv.{{ profile.union.union_artifact_level }}</span>
             </div>
+            <div
+              v-if="familiarDisplayList.length > 0"
+              class="mini-stat mini-stat-clickable"
+              title="點擊切換至萌獸裝備頁籤"
+              @click="activeTab = 'equipment'; equipMainTab = 'familiar'"
+            >
+              <span class="mini-label">🐾 出戰萌獸</span>
+              <span class="mini-value">{{ familiarDisplayList.length }} 隻 (點擊查看)</span>
+            </div>
+
           </div>
 
           <div class="ocid-box">
@@ -1966,6 +2025,14 @@ const hexaStatSlotsDisplay = computed(() => {
               >
                 寵物
               </button>
+              <button
+                type="button"
+                class="maple-subtab-btn"
+                :class="{ active: equipMainTab === 'familiar' }"
+                @click="equipMainTab = 'familiar'"
+              >
+                萌獸
+              </button>
             </div>
 
             <div class="maple-window-body">
@@ -2141,7 +2208,7 @@ const hexaStatSlotsDisplay = computed(() => {
               </template>
 
               <!-- 寵物分頁 (PET 1 ~ 3 直立三欄式卡片，仿遊戲內截圖) -->
-              <template v-else>
+              <template v-else-if="equipMainTab === 'pet'">
                 <div class="maple-mode-header">
                   <span class="maple-mode-title">PET</span>
                 </div>
@@ -2229,6 +2296,83 @@ const hexaStatSlotsDisplay = computed(() => {
                         </template>
                         <span v-else class="coord-empty-label">PET<br />SKILL</span>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <!-- 萌獸分頁 (FAMILIAR 1 ~ 3 直立卡片風格，仿遊戲內萌獸欄位與階級框) -->
+              <template v-else-if="equipMainTab === 'familiar'">
+                <div class="maple-mode-header">
+                  <span class="maple-mode-title">FAMILIAR</span>
+                  <span class="familiar-count-badge" v-if="familiarDisplayList.length">
+                    已裝備 {{ familiarDisplayList.length }} / 3
+                  </span>
+                </div>
+
+                <div v-if="familiarDisplayList.length === 0" class="familiar-empty-state">
+                  <span class="familiar-empty-icon">🐾</span>
+                  <p class="familiar-empty-title">目前尚未召喚或裝備萌獸</p>
+                  <p class="familiar-empty-sub">若角色已於遊戲內召喚萌獸，請確認 API 同步時間或重新查詢。</p>
+                </div>
+
+                <div v-else class="familiar-3col-grid">
+                  <div
+                    v-for="fam in familiarDisplayList"
+                    :key="fam.slot"
+                    class="familiar-col-card"
+                    :class="[`familiar-grade-${fam.grade}`]"
+                    @mouseenter="onEquipEnter(fam.itemInfo, $event)"
+                    @mousemove="onEquipMove($event)"
+                    @mouseleave="onEquipLeave"
+                  >
+                    <!-- 卡片頂部：插槽與階級徽章 -->
+                    <div class="fam-card-header">
+                      <span class="fam-slot-tag">SLOT {{ fam.slot }}</span>
+                      <span class="fam-grade-badge" :class="[`badge-grade-${fam.grade}`]">
+                        {{ fam.grade }}
+                      </span>
+                    </div>
+
+                    <!-- 萌獸立繪/圖標展示區 -->
+                    <div class="fam-avatar-stage">
+                      <div class="fam-avatar-glow"></div>
+                      <img
+                        v-if="fam.icon"
+                        :src="fam.icon"
+                        :alt="fam.name"
+                        class="fam-avatar-img"
+                      />
+                      <div v-else class="fam-avatar-placeholder">🐾</div>
+                    </div>
+
+                    <!-- 萌獸名稱與等級 -->
+                    <div class="fam-meta-info">
+                      <span class="fam-level-pill">Lv.{{ fam.level }}</span>
+                      <h4 class="fam-name">{{ fam.name }}</h4>
+                    </div>
+
+                    <div class="fam-divider"></div>
+
+                    <!-- 潛能屬性清單 -->
+                    <div class="fam-options-list">
+                      <div class="fam-options-title">⚡ 萌獸潛能</div>
+                      <template v-if="fam.options.length">
+                        <div
+                          v-for="(opt, oIdx) in fam.options"
+                          :key="oIdx"
+                          class="fam-option-line"
+                        >
+                          <span class="fam-option-bullet">▪</span>
+                          <span class="fam-option-text">{{ opt }}</span>
+                        </div>
+                      </template>
+                      <div v-else class="fam-option-empty">無額外潛能屬性</div>
+                    </div>
+
+                    <!-- 萌獸技能 (若有) -->
+                    <div v-if="fam.skill" class="fam-skill-line">
+                      <span class="fam-skill-label">技能:</span>
+                      <span class="fam-skill-text">{{ fam.skill }}</span>
                     </div>
                   </div>
                 </div>

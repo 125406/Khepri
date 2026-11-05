@@ -431,6 +431,30 @@ export interface CharacterHexaMatrixStat {
   preset_hexa_stat_core_3: HexaStatCore[] | null
 }
 
+export interface FamiliarInfo {
+  familiar_name: string
+  familiar_grade?: string | null
+  familiar_level?: number | null
+  familiar_icon?: string | null
+  familiar_description?: string | null
+  familiar_option_1?: string | null
+  familiar_option_2?: string | null
+  familiar_option_3?: string | null
+  option_1?: string | null
+  option_2?: string | null
+  option_3?: string | null
+  familiar_skill?: string | null
+}
+
+export interface CharacterFamiliar {
+  date: string | null
+  character_class?: string | null
+  familiar?: FamiliarInfo[] | null
+  familiar_preset_1?: FamiliarInfo[] | null
+  familiar_preset_2?: FamiliarInfo[] | null
+  familiar_preset_3?: FamiliarInfo[] | null
+}
+
 export interface FullCharacterProfile {
   ocid: string
   region: GameRegion
@@ -445,6 +469,7 @@ export interface FullCharacterProfile {
   cashEquipment: CharacterCashItemEquipment | null
   beautyEquipment?: CharacterBeautyEquipment | null
   symbolEquipment: CharacterSymbolEquipment | null
+  familiar?: CharacterFamiliar | null
   hexaMatrix?: CharacterHexaMatrix | null
   hexaMatrixStat?: CharacterHexaMatrixStat | null
   union: UserUnion | null

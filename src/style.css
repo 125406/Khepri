@@ -1305,6 +1305,310 @@ code {
   border-radius: 6px;
 }
 
+/* =========================================================
+   MapleStory Familiar (萌獸) Window & Cards
+   ========================================================= */
+.familiar-count-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.familiar-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1.5px dashed rgba(148, 163, 184, 0.28);
+  border-radius: 14px;
+  margin: 12px 0;
+}
+
+.familiar-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.75;
+}
+
+.familiar-empty-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin-bottom: 6px;
+}
+
+.familiar-empty-sub {
+  font-size: 0.84rem;
+  color: #94a3b8;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.familiar-3col-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.familiar-col-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #334155;
+  border-radius: 12px;
+  padding: 12px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.familiar-col-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* 萌獸階級邊框與發光特效 */
+.familiar-col-card.familiar-grade-傳說,
+.familiar-col-card.familiar-grade-Legendary {
+  border-color: #f59e0b;
+  background: linear-gradient(180deg, #2a1f1d 0%, #15111b 100%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.18);
+}
+.familiar-col-card.familiar-grade-傳說:hover,
+.familiar-col-card.familiar-grade-Legendary:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.35);
+}
+
+.familiar-col-card.familiar-grade-罕見,
+.familiar-col-card.familiar-grade-Unique {
+  border-color: #ec4899;
+  background: linear-gradient(180deg, #261623 0%, #130f1d 100%);
+  box-shadow: 0 0 14px rgba(236, 72, 153, 0.16);
+}
+.familiar-col-card.familiar-grade-罕見:hover,
+.familiar-col-card.familiar-grade-Unique:hover {
+  border-color: #f472b6;
+  box-shadow: 0 0 22px rgba(236, 72, 153, 0.32);
+}
+
+.familiar-col-card.familiar-grade-稀有,
+.familiar-col-card.familiar-grade-Epic {
+  border-color: #a855f7;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.14);
+}
+
+.familiar-col-card.familiar-grade-特殊,
+.familiar-col-card.familiar-grade-Rare {
+  border-color: #3b82f6;
+}
+
+.fam-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.fam-slot-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.fam-grade-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
+.badge-grade-傳說,
+.badge-grade-Legendary {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.badge-grade-罕見,
+.badge-grade-Unique {
+  background: linear-gradient(180deg, #ec4899 0%, #db2777 100%);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.badge-grade-稀有,
+.badge-grade-Epic {
+  background: linear-gradient(180deg, #a855f7 0%, #9333ea 100%);
+  color: #ffffff;
+}
+
+.badge-grade-特殊,
+.badge-grade-Rare {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+}
+
+.badge-grade-普通 {
+  background: #64748b;
+  color: #f8fafc;
+}
+
+.fam-avatar-stage {
+  position: relative;
+  width: 100%;
+  height: 96px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(15, 23, 42, 0.6) 75%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.fam-avatar-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+  transition: transform 0.18s ease;
+}
+
+.familiar-col-card:hover .fam-avatar-img {
+  transform: scale(1.08);
+}
+
+.fam-avatar-placeholder {
+  font-size: 2.2rem;
+  opacity: 0.6;
+}
+
+.fam-meta-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.fam-level-pill {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  white-space: nowrap;
+}
+
+.fam-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fam-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.22);
+  margin-bottom: 8px;
+}
+
+.fam-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 80px;
+  margin-bottom: 6px;
+}
+
+.fam-options-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.fam-option-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: #a7f3d0;
+  font-weight: 600;
+}
+
+.fam-option-bullet {
+  color: #34d399;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.fam-option-text {
+  word-break: break-all;
+}
+
+.fam-option-empty {
+  font-size: 0.74rem;
+  color: #64748b;
+  font-style: italic;
+  padding: 6px 0;
+}
+
+.fam-skill-line {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fam-skill-label {
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.mini-stat-clickable {
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.mini-stat-clickable:hover {
+  transform: translateY(-1px);
+  border-color: #38bdf8 !important;
+}
+
 /* MapleStory In-Game ARCANE / AUTHENTIC Symbol Window (Matching Screenshot) */
 .maple-symbol-window {
   background: #e2e8f0;
@@ -4719,6 +5023,19 @@ code {
   }
   .royal-draw-buttons {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .familiar-3col-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .familiar-col-card {
+    padding: 14px;
+  }
+  .fam-avatar-stage {
+    height: 110px;
   }
 }
 
