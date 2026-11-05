@@ -8,6 +8,7 @@ import RankingStudio from './components/RankingStudio.vue'
 import UnionBoardViewer from './components/UnionBoardViewer.vue'
 import { fetchFullCharacterProfile, fetchRecentExpHistory, enrichUnionChampions } from './services/nexonApi'
 import { recordSearchedCharacter } from './services/communityRankService'
+import { getFamiliarIconUrl, generateFamiliarCardSvg } from './utils/familiarAssets'
 import type {
   ExpHistoryEntry,
   FullCharacterProfile,
@@ -945,178 +946,304 @@ const petDisplayList = computed(() => {
   })
 })
 
-// 萌獸 (Familiar) 資料轉換：支援新版 TMS (familiar_link_slot + familiar_info) 與舊版 familiar 陣列
-const familiarDisplayList = computed(() => {
+// 萌獸 (Familiar) 資料轉換：支援 GAS / TMS (召喚中萌獸 + 4格羈絆欄位 1, 2, 3, VIP + 其餘未羈絆已登錄萌獸)
+const familiarDisplayData = computed(() => {
   const famData = profile.value?.familiar
-  if (!famData) return []
+  if (!famData) {
+    return {
+      focus: null,
+      bondSlots: [],
+      restList: [],
+      allCount: 0,
+      activeSlotCount: 0,
+    }
+  }
 
-  // TMS API 格式：familiar_info 包含萌獸本體資料，familiar_link_slot 標記裝備欄位 (slot_id: "1", "2", "3", "vip")
   const infoList = famData.familiar_info || []
   const linkSlots = famData.familiar_link_slot || []
   const legacyList = famData.familiar || []
 
-  // 1. 若有 TMS 專屬結構
+  // 輔助函式：標準化 slot_id
+  const slotKey = (id: string | null | undefined): string => {
+    let s = String(id || '').trim().toLowerCase()
+    s = s.replace(/^slot\s*/i, '').replace(/^槽位\s*/i, '').trim()
+    if (s === 'vip' || s === 'v.i.p') return 'vip'
+    if (s === '1' || s === '01') return '1'
+    if (s === '2' || s === '02') return '2'
+    if (s === '3' || s === '03') return '3'
+    return s
+  }
+
+  const slotOrder = ['1', '2', '3', 'vip'] as const
+
+  // 1. 若有 TMS 專屬結構 (familiar_link_slot 或 familiar_info)
   if (infoList.length > 0 || linkSlots.length > 0) {
-    // 依 slot_id 建立 slot 對應表
-    const activeSlotMap = new Map<string, string>()
-    for (const slotItem of linkSlots) {
-      if (slotItem.familiar_name && slotItem.slot_id) {
-        activeSlotMap.set(String(slotItem.slot_id), slotItem.familiar_name)
+    const rawSlotByKey = new Map<string, (typeof linkSlots)[number]>()
+    for (const slot of linkSlots) {
+      const k = slotKey(slot.slot_id)
+      if (k && !rawSlotByKey.has(k)) {
+        rawSlotByKey.set(k, slot)
       }
     }
 
-    // 取得所有裝備中 (linked) 或被 slot 引用的萌獸
-    const equippedFamiliars: Array<{ fam: typeof infoList[number]; slot: string }> = []
-    const usedNames = new Set<string>()
-
-    // 優先檢查 slot 1, 2, 3, vip
-    const preferredSlotIds = ['1', '2', '3', 'vip']
-    for (const sid of preferredSlotIds) {
-      const famName = activeSlotMap.get(sid)
-      if (famName) {
-        const found = infoList.find((f) => f.familiar_name === famName || f.familiar_nickname === famName)
-        if (found) {
-          equippedFamiliars.push({ fam: found, slot: sid === 'vip' ? 'VIP' : sid })
-          usedNames.add(found.familiar_name)
-        } else {
-          // 若在 info 裡沒找到對應名字，依舊建立空佔位或虛擬卡片
-          equippedFamiliars.push({
-            fam: {
-              familiar_name: famName,
-              familiar_level: 1,
-              familiar_grade: '特殊',
-            },
-            slot: sid === 'vip' ? 'VIP' : sid,
-          })
-          usedNames.add(famName)
-        }
+    // 依 slot_id 建立 info 對應表
+    const infoBySlot = new Map<string, (typeof infoList)[number]>()
+    for (const it of infoList) {
+      const k = slotKey(it.slot_id)
+      if (slotOrder.includes(k as any) && !infoBySlot.has(k)) {
+        infoBySlot.set(k, it)
       }
     }
 
-    // 若 linkSlots 沒指派，但 familiar_info 中有 familiar_state === 'linked' 或有 slot_id
-    if (equippedFamiliars.length === 0) {
-      for (const item of infoList) {
-        if (item.familiar_state === 'linked' || item.slot_id || item.summoned_flag === 'true') {
-          if (!usedNames.has(item.familiar_name)) {
-            equippedFamiliars.push({
-              fam: item,
-              slot: item.slot_id ? String(item.slot_id) : String(equippedFamiliars.length + 1),
-            })
-            usedNames.add(item.familiar_name)
-          }
-        }
-      }
-    }
-
-    // 若仍為空但 infoList 有登記萌獸，展示前 3 隻
-    const targetList =
-      equippedFamiliars.length > 0
-        ? equippedFamiliars
-        : infoList.slice(0, 3).map((f, i) => ({ fam: f, slot: String(i + 1) }))
-
-    if (targetList.length > 0) {
-      return targetList.map(({ fam, slot }) => {
-        // 格式化潛能：option 陣列 (option_name + option_value) 或舊版 familiar_option_X
-        const opts: string[] = []
-        if (fam.option && Array.isArray(fam.option)) {
-          for (const o of fam.option) {
-            if (o.option_name) {
-              const valStr = o.option_value ? ` ${o.option_value.startsWith('+') ? '' : '+'}${o.option_value}` : ''
-              opts.push(`${o.option_name}${valStr}`)
-            }
-          }
-        } else {
-          const legacyOpts = [
-            fam.familiar_option_1 || fam.option_1,
-            fam.familiar_option_2 || fam.option_2,
-            fam.familiar_option_3 || fam.option_3,
-          ].filter(Boolean) as string[]
-          opts.push(...legacyOpts)
-        }
-
-        const grade = fam.familiar_grade || (fam.familiar_special_flag === 'true' ? '特殊' : '普通')
-        const lv = fam.familiar_level || 1
-
-        const descLines: string[] = []
-        descLines.push(`階級：${grade}`)
-        descLines.push(`等級：Lv.${lv}`)
-        if (fam.skill_name || fam.familiar_skill) {
-          descLines.push(`萌獸技能：${fam.skill_name || fam.familiar_skill}`)
-        }
-        if (fam.familiar_description) {
-          descLines.push(fam.familiar_description)
-        }
-
-        const equipItem = makeEmptyEquipmentItem({
-          item_equipment_part: `萌獸 (Slot ${slot})`,
-          item_equipment_slot: `萌獸${slot}`,
-          item_name: fam.familiar_nickname || fam.familiar_name,
-          item_icon: fam.familiar_icon || makeBeautyMannequinSvg('hair'),
-          item_description: descLines.join('\n'),
+    // 若 familiar_info 裡 slot_id 沒有對上，以 familiar_link_slot 的名稱比對回填
+    for (const sid of slotOrder) {
+      if (infoBySlot.has(sid)) continue
+      const rawSlot = rawSlotByKey.get(sid)
+      if (rawSlot?.familiar_name) {
+        const targetName = rawSlot.familiar_name.trim().toLowerCase()
+        const matched = infoList.find((it) => {
+          const n1 = (it.familiar_name || '').trim().toLowerCase()
+          const n2 = (it.familiar_nickname || '').trim().toLowerCase()
+          return (n1 === targetName || n2 === targetName) && (it.familiar_state === 'linked' || it.slot_id === 'not link')
         })
-        equipItem.potential_option_grade = grade
-        equipItem.potential_option_1 = opts[0] || null
-        equipItem.potential_option_2 = opts[1] || null
-        equipItem.potential_option_3 = opts[2] || null
-
-        return {
-          slot,
-          name: fam.familiar_nickname || fam.familiar_name,
-          grade,
-          level: lv,
-          icon: fam.familiar_icon,
-          options: opts,
-          description: fam.familiar_description,
-          skill: fam.skill_name || fam.familiar_skill,
-          itemInfo: equipItem,
+        if (matched) {
+          infoBySlot.set(sid, matched)
         }
+      }
+    }
+
+    // 解析萌獸項目為標準顯示物件
+    const formatFamiliarEntry = (
+      fam: (typeof infoList)[number] | null,
+      slotLabel: string,
+      slotRaw?: (typeof linkSlots)[number] | null
+    ) => {
+      if (!fam && !slotRaw?.familiar_name) return null
+
+      const name = fam?.familiar_nickname || fam?.familiar_name || slotRaw?.familiar_name || '萌獸'
+      const originalName = fam?.familiar_name || slotRaw?.familiar_name || ''
+      const grade = fam?.familiar_grade || (fam?.familiar_special_flag === 'true' ? '特殊' : '普通')
+      const lv = fam?.familiar_level || 1
+      const icon = fam?.familiar_icon || getFamiliarIconUrl(originalName) || getFamiliarIconUrl(name) || generateFamiliarCardSvg(originalName || name, grade)
+
+      const opts: string[] = []
+      if (fam?.option && Array.isArray(fam.option)) {
+        for (const o of fam.option) {
+          if (o.option_name) {
+            const valStr = o.option_value ? ` ${o.option_value.startsWith('+') ? '' : '+'}${o.option_value}` : ''
+            opts.push(`${o.option_name}${valStr}`)
+          }
+        }
+      } else if (fam) {
+        const legacyOpts = [
+          fam.familiar_option_1 || fam.option_1,
+          fam.familiar_option_2 || fam.option_2,
+          fam.familiar_option_3 || fam.option_3,
+        ].filter(Boolean) as string[]
+        opts.push(...legacyOpts)
+      }
+
+      const descLines: string[] = []
+      descLines.push(`階級：${grade}`)
+      descLines.push(`等級：Lv.${lv}`)
+      if (fam?.skill_name || fam?.familiar_skill) {
+        descLines.push(`萌獸技能：${fam.skill_name || fam.familiar_skill}`)
+      }
+      if (fam?.look_name) {
+        descLines.push(`外觀造型：${fam.look_name}`)
+      }
+      if (fam?.familiar_description) {
+        descLines.push(fam.familiar_description)
+      }
+
+      const equipItem = makeEmptyEquipmentItem({
+        item_equipment_part: `萌獸 (${slotLabel})`,
+        item_equipment_slot: `萌獸${slotLabel}`,
+        item_name: originalName && name !== originalName ? `${name} (${originalName})` : name,
+        item_icon: icon,
+        item_description: descLines.join('\n'),
       })
+      equipItem.potential_option_grade = grade
+      equipItem.potential_option_1 = opts[0] || null
+      equipItem.potential_option_2 = opts[1] || null
+      equipItem.potential_option_3 = opts[2] || null
+
+      const isActive =
+        slotRaw?.active_flag === 'true' ||
+        slotRaw?.active_flag === '1' ||
+        fam?.summoned_flag === 'true'
+
+      return {
+        slot: slotLabel,
+        name,
+        originalName,
+        displayName: originalName && name !== originalName ? `${name} (${originalName})` : name,
+        grade,
+        level: lv,
+        optionLevel: fam?.option_level || null,
+        icon,
+        options: opts,
+        description: fam?.familiar_description || null,
+        skill: fam?.skill_name || fam?.familiar_skill || null,
+        lookName: fam?.look_name || null,
+        state: fam?.familiar_state || (slotRaw ? 'linked' : 'registered'),
+        isActive,
+        expireDate: slotRaw?.expire_date || null,
+        itemInfo: equipItem,
+        raw: fam,
+      }
+    }
+
+    // 2. 建立 4 格羈絆欄位 (槽位 1、槽位 2、槽位 3、VIP)
+    const bondSlots = slotOrder.map((sid) => {
+      const slotRaw = rawSlotByKey.get(sid) || { slot_id: sid, familiar_name: null, active_flag: 'false', expire_date: null }
+      const matchedInfo = infoBySlot.get(sid) || null
+      const slotLabel = sid === 'vip' ? 'VIP' : `槽位 ${sid}`
+      const entry = formatFamiliarEntry(matchedInfo, slotLabel, slotRaw)
+
+      return {
+        sid,
+        slotLabel,
+        isVip: sid === 'vip',
+        isActive: slotRaw.active_flag === 'true' || matchedInfo?.summoned_flag === 'true',
+        expireDate: slotRaw.expire_date || null,
+        entry,
+      }
+    })
+
+    // 3. 找出「召喚中 / 當前焦點」萌獸
+    // 優先順序：summoned_flag === 'true' > 4 格中啟用中 (active) 的第一隻 > 槽位 1
+    let focusEntry: ReturnType<typeof formatFamiliarEntry> | null = null
+    const summonedItem = infoList.find((f) => f.summoned_flag === 'true')
+    if (summonedItem) {
+      focusEntry = formatFamiliarEntry(summonedItem, '召喚中')
+    } else {
+      const activeBond = bondSlots.find((b) => b.isActive && b.entry)
+      if (activeBond?.entry) {
+        focusEntry = activeBond.entry
+      } else {
+        const firstBond = bondSlots.find((b) => b.entry)
+        if (firstBond?.entry) {
+          focusEntry = firstBond.entry
+        } else if (infoList[0]) {
+          focusEntry = formatFamiliarEntry(infoList[0], '未羈絆')
+        }
+      }
+    }
+
+    // 4. 其餘已登錄且未進入羈絆欄位的萌獸 (避免重複呈現)
+    const bondedItemSet = new Set(
+      bondSlots.map((b) => b.entry?.raw).filter(Boolean)
+    )
+    const bondedNames = new Set(
+      bondSlots
+        .map((b) => b.entry?.originalName || b.entry?.name)
+        .filter(Boolean)
+        .map((s) => s!.trim().toLowerCase())
+    )
+
+    const restList: Array<NonNullable<ReturnType<typeof formatFamiliarEntry>>> = []
+    for (const it of infoList) {
+      if (bondedItemSet.has(it)) continue
+      const n = (it.familiar_name || it.familiar_nickname || '').trim().toLowerCase()
+      if (it.familiar_state === 'linked' || (bondedNames.has(n) && it.slot_id !== 'not link')) {
+        continue
+      }
+      const entry = formatFamiliarEntry(it, '已登錄')
+      if (entry) {
+        restList.push(entry)
+      }
+    }
+
+    const activeSlotCount = bondSlots.filter((b) => b.isActive && b.entry).length
+
+    return {
+      focus: focusEntry,
+      bondSlots,
+      restList,
+      allCount: infoList.length,
+      activeSlotCount,
     }
   }
 
-  // 2. 舊版 / KMS / GMS 備用結構 (famData.familiar)
-  if (legacyList.length === 0) return []
+  // 舊版或相容 fallback
+  if (legacyList.length > 0) {
+    const list = legacyList.map((fam, idx) => {
+      const name = fam.familiar_name
+      const grade = fam.familiar_grade || '普通'
+      const icon = fam.familiar_icon || getFamiliarIconUrl(name) || generateFamiliarCardSvg(name, grade)
+      const opts = [
+        fam.familiar_option_1 || fam.option_1,
+        fam.familiar_option_2 || fam.option_2,
+        fam.familiar_option_3 || fam.option_3,
+      ].filter(Boolean) as string[]
 
-  return legacyList.map((fam, idx) => {
-    const opts = [
-      fam.familiar_option_1 || fam.option_1,
-      fam.familiar_option_2 || fam.option_2,
-      fam.familiar_option_3 || fam.option_3,
-    ].filter(Boolean) as string[]
+      const equipItem = makeEmptyEquipmentItem({
+        item_equipment_part: `萌獸 (Slot ${idx + 1})`,
+        item_equipment_slot: `萌獸${idx + 1}`,
+        item_name: name,
+        item_icon: icon,
+        item_description: `階級：${grade}\n等級：Lv.${fam.familiar_level || 1}`,
+      })
+      equipItem.potential_option_grade = grade
+      equipItem.potential_option_1 = opts[0] || null
+      equipItem.potential_option_2 = opts[1] || null
+      equipItem.potential_option_3 = opts[2] || null
 
-    const grade = fam.familiar_grade || '普通'
-    const lv = fam.familiar_level || 1
-
-    const descLines: string[] = []
-    descLines.push(`階級：${grade}`)
-    descLines.push(`等級：Lv.${lv}`)
-    if (fam.familiar_skill) descLines.push(`萌獸技能：${fam.familiar_skill}`)
-    if (fam.familiar_description) descLines.push(fam.familiar_description)
-
-    const equipItem = makeEmptyEquipmentItem({
-      item_equipment_part: `萌獸 (Slot ${idx + 1})`,
-      item_equipment_slot: `萌獸${idx + 1}`,
-      item_name: fam.familiar_name,
-      item_icon: fam.familiar_icon || makeBeautyMannequinSvg('hair'),
-      item_description: descLines.join('\n'),
+      return {
+        slot: `槽位 ${idx + 1}`,
+        name,
+        originalName: name,
+        displayName: name,
+        grade,
+        level: fam.familiar_level || 1,
+        optionLevel: null,
+        icon,
+        options: opts,
+        description: fam.familiar_description || null,
+        skill: fam.familiar_skill || null,
+        lookName: null,
+        state: 'linked',
+        isActive: idx === 0,
+        expireDate: null,
+        itemInfo: equipItem,
+        raw: fam,
+      }
     })
-    equipItem.potential_option_grade = grade
-    equipItem.potential_option_1 = opts[0] || null
-    equipItem.potential_option_2 = opts[1] || null
-    equipItem.potential_option_3 = opts[2] || null
+
+    const bondSlots = list.slice(0, 4).map((entry, idx) => ({
+      sid: String(idx + 1),
+      slotLabel: `槽位 ${idx + 1}`,
+      isVip: idx === 3,
+      isActive: idx === 0,
+      expireDate: null,
+      entry,
+    }))
 
     return {
-      slot: String(idx + 1),
-      name: fam.familiar_name,
-      grade,
-      level: lv,
-      icon: fam.familiar_icon,
-      options: opts,
-      description: fam.familiar_description,
-      skill: fam.familiar_skill,
-      itemInfo: equipItem,
+      focus: list[0] || null,
+      bondSlots,
+      restList: list.slice(4),
+      allCount: list.length,
+      activeSlotCount: 1,
     }
-  })
+  }
+
+  return {
+    focus: null,
+    bondSlots: [],
+    restList: [],
+    allCount: 0,
+    activeSlotCount: 0,
+  }
+})
+
+// 相容舊有 familiarDisplayList 參考
+const familiarDisplayList = computed(() => {
+  const d = familiarDisplayData.value
+  const fromBonds = d.bondSlots.map((b) => b.entry).filter(Boolean) as Array<NonNullable<(typeof d)['bondSlots'][number]['entry']>>
+  if (fromBonds.length > 0) return fromBonds
+  return d.restList.slice(0, 3)
 })
 
 // 符文裝備 (ARCANE / AUTHENTIC) 仿遊戲內 3x2 視窗資料
@@ -2425,79 +2552,232 @@ const hexaStatSlotsDisplay = computed(() => {
                   </div>
                 </div>
               </template>
-              <!-- 萌獸分頁 (FAMILIAR 1 ~ 3 直立卡片風格，仿遊戲內萌獸欄位與階級框) -->
+              <!-- 萌獸分頁 (依照 Google Apps Script 儀表板架構：左側「召喚萌獸主卡」+ 右側「4格羈絆欄位(1,2,3,VIP)」+ 下方「其餘未羈絆已登錄萌獸」) -->
               <template v-else-if="equipMainTab === 'familiar'">
                 <div class="maple-mode-header">
-                  <span class="maple-mode-title">FAMILIAR</span>
-                  <span class="familiar-count-badge" v-if="familiarDisplayList.length">
-                    已裝備 {{ familiarDisplayList.length }} / 3
-                  </span>
+                  <div class="fam-header-left">
+                    <span class="maple-mode-title">FAMILIAR 萌獸系統</span>
+                    <span class="familiar-count-badge" v-if="familiarDisplayData.allCount">
+                      共登錄 {{ familiarDisplayData.allCount }} 隻
+                    </span>
+                    <span class="familiar-active-badge" v-if="familiarDisplayData.activeSlotCount">
+                      羈絆啟用 {{ familiarDisplayData.activeSlotCount }} 格
+                    </span>
+                  </div>
                 </div>
 
-                <div v-if="familiarDisplayList.length === 0" class="familiar-empty-state">
+                <div v-if="!familiarDisplayData.focus && !familiarDisplayData.bondSlots.some(b => b.entry)" class="familiar-empty-state">
                   <span class="familiar-empty-icon">🐾</span>
                   <p class="familiar-empty-title">目前尚未召喚或裝備萌獸</p>
                   <p class="familiar-empty-sub">若角色已於遊戲內召喚萌獸，請確認 API 同步時間或重新查詢。</p>
                 </div>
 
-                <div v-else class="familiar-3col-grid">
-                  <div
-                    v-for="fam in familiarDisplayList"
-                    :key="fam.slot"
-                    class="familiar-col-card"
-                    :class="[`familiar-grade-${fam.grade}`]"
-                    @mouseenter="onEquipEnter(fam.itemInfo, $event)"
-                    @mousemove="onEquipMove($event)"
-                    @mouseleave="onEquipLeave"
-                  >
-                    <!-- 卡片頂部：插槽與階級徽章 -->
-                    <div class="fam-card-header">
-                      <span class="fam-slot-tag">SLOT {{ fam.slot }}</span>
-                      <span class="fam-grade-badge" :class="[`badge-grade-${fam.grade}`]">
-                        {{ fam.grade }}
-                      </span>
-                    </div>
+                <div v-else class="familiar-gas-dashboard">
+                  <!-- 上半部：雙欄佈局 (左：召喚/主力萌獸焦點卡，右：4 格羈絆欄位) -->
+                  <div class="familiar-summon-layout">
+                    <!-- 左欄：召喚萌獸 (Focus Card) -->
+                    <section class="familiar-focus-card">
+                      <div class="fam-panel-eyebrow">FAMILIAR</div>
+                      <div class="fam-panel-title-row">
+                        <h4 class="fam-panel-title">🐾 召喚萌獸</h4>
+                        <span class="fam-panel-meta">
+                          {{ familiarDisplayData.focus?.state === 'linked' ? (familiarDisplayData.focus.slot || '已羈絆') : '未羈絆' }}
+                        </span>
+                      </div>
 
-                    <!-- 萌獸立繪/圖標展示區 -->
-                    <div class="fam-avatar-stage">
-                      <div class="fam-avatar-glow"></div>
-                      <img
-                        v-if="fam.icon"
-                        :src="fam.icon"
-                        :alt="fam.name"
-                        class="fam-avatar-img"
-                      />
-                      <div v-else class="fam-avatar-placeholder">🐾</div>
-                    </div>
-
-                    <!-- 萌獸名稱與等級 -->
-                    <div class="fam-meta-info">
-                      <span class="fam-level-pill">Lv.{{ fam.level }}</span>
-                      <h4 class="fam-name">{{ fam.name }}</h4>
-                    </div>
-
-                    <div class="fam-divider"></div>
-
-                    <!-- 潛能屬性清單 -->
-                    <div class="fam-options-list">
-                      <div class="fam-options-title">⚡ 萌獸潛能</div>
-                      <template v-if="fam.options.length">
-                        <div
-                          v-for="(opt, oIdx) in fam.options"
-                          :key="oIdx"
-                          class="fam-option-line"
-                        >
-                          <span class="fam-option-bullet">▪</span>
-                          <span class="fam-option-text">{{ opt }}</span>
+                      <div v-if="familiarDisplayData.focus" class="fam-focus-hero">
+                        <div class="fam-focus-avatar-wrap">
+                          <img
+                            :src="familiarDisplayData.focus.icon"
+                            :alt="familiarDisplayData.focus.displayName"
+                            class="fam-focus-avatar-img"
+                            loading="lazy"
+                          />
                         </div>
-                      </template>
-                      <div v-else class="fam-option-empty">無額外潛能屬性</div>
+                        <div class="fam-focus-body">
+                          <h4 class="fam-focus-title">{{ familiarDisplayData.focus.displayName }}</h4>
+                          <div class="fam-focus-sub">
+                            <span>Lv.{{ familiarDisplayData.focus.level }}</span>
+                            <span v-if="familiarDisplayData.focus.optionLevel"> · 潛能 Lv.{{ familiarDisplayData.focus.optionLevel }}</span>
+                            <span v-if="familiarDisplayData.focus.grade"> · {{ familiarDisplayData.focus.grade }}</span>
+                          </div>
+
+                          <div class="fam-focus-badges">
+                            <span v-if="familiarDisplayData.focus.isActive" class="fam-badge good">召喚中</span>
+                            <span class="fam-badge" :class="[`badge-grade-${familiarDisplayData.focus.grade}`]">
+                              {{ familiarDisplayData.focus.grade }}
+                            </span>
+                            <span v-if="familiarDisplayData.focus.skill" class="fam-badge">
+                              技能：{{ familiarDisplayData.focus.skill }}
+                            </span>
+                            <span v-if="familiarDisplayData.focus.lookName" class="fam-badge">
+                              外觀：{{ familiarDisplayData.focus.lookName }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 召喚萌獸潛能清單 -->
+                      <div v-if="familiarDisplayData.focus?.options?.length" class="fam-focus-options">
+                        <div
+                          v-for="(opt, oIdx) in familiarDisplayData.focus.options"
+                          :key="oIdx"
+                          class="fam-focus-option-row"
+                        >
+                          <span class="fam-opt-bullet">⚡</span>
+                          <span class="fam-opt-text">{{ opt }}</span>
+                        </div>
+                      </div>
+                      <div v-else class="fam-focus-empty-opts">
+                        此萌獸尚無額外潛能資料
+                      </div>
+                    </section>
+
+                    <!-- 右欄：萌獸羈絆 4 格 (槽位 1、槽位 2、槽位 3、VIP) -->
+                    <aside class="familiar-link-panel">
+                      <div class="fam-panel-title-row">
+                        <h4 class="fam-panel-title">🔗 萌獸羈絆 (Link Slots)</h4>
+                        <span class="fam-panel-meta">固定 4 格官方欄位</span>
+                      </div>
+
+                      <div class="familiar-link-grid">
+                        <div
+                          v-for="slotItem in familiarDisplayData.bondSlots"
+                          :key="slotItem.sid"
+                          class="fam-link-slot-card"
+                          :class="{
+                            'active': slotItem.isActive,
+                            'vip': slotItem.isVip,
+                            'empty': !slotItem.entry
+                          }"
+                          @mouseenter="slotItem.entry?.itemInfo && onEquipEnter(slotItem.entry.itemInfo, $event)"
+                          @mousemove="slotItem.entry?.itemInfo && onEquipMove($event)"
+                          @mouseleave="onEquipLeave"
+                        >
+                          <div class="fam-slot-top-row">
+                            <span class="fam-slot-id-label">{{ slotItem.slotLabel }}</span>
+                            <span class="fam-slot-state-tag" :class="{ active: slotItem.isActive }">
+                              {{ slotItem.isActive ? '啟用中' : '未啟用' }}
+                            </span>
+                          </div>
+
+                          <template v-if="slotItem.entry">
+                            <div class="fam-slot-card-body">
+                              <div class="fam-slot-icon-box">
+                                <img
+                                  :src="slotItem.entry.icon"
+                                  :alt="slotItem.entry.displayName"
+                                  class="fam-slot-icon-img"
+                                  loading="lazy"
+                                />
+                              </div>
+                              <div class="fam-slot-info-box">
+                                <div class="fam-slot-name" :title="slotItem.entry.displayName">
+                                  {{ slotItem.entry.displayName }}
+                                </div>
+                                <div class="fam-slot-sub">
+                                  Lv.{{ slotItem.entry.level }}
+                                  <span v-if="slotItem.entry.grade">｜{{ slotItem.entry.grade }}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div v-if="slotItem.entry.options.length" class="fam-slot-opts-list">
+                              <div
+                                v-for="(opt, oIdx) in slotItem.entry.options"
+                                :key="oIdx"
+                                class="fam-slot-opt-item"
+                              >
+                                {{ opt }}
+                              </div>
+                            </div>
+                            <div v-else class="fam-slot-empty-opts">
+                              無潛能資料
+                            </div>
+                          </template>
+
+                          <template v-else>
+                            <div class="fam-slot-empty-body">
+                              <span class="fam-empty-slot-icon">🐾</span>
+                              <span class="fam-empty-slot-text">可放置羈絆萌獸</span>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+
+                      <div class="fam-link-footer">
+                        <span>目前啟用羈絆：</span>
+                        <b>
+                          {{
+                            familiarDisplayData.bondSlots
+                              .filter((b) => b.isActive && b.entry)
+                              .map((b) => b.entry?.name)
+                              .join('、') || '無'
+                          }}
+                        </b>
+                      </div>
+                    </aside>
+                  </div>
+
+                  <!-- 下半部：其餘未羈絆已登錄萌獸列表 (Roster Grid) -->
+                  <div v-if="familiarDisplayData.restList.length > 0" class="familiar-roster-section">
+                    <div class="fam-roster-header">
+                      <div class="fam-roster-title-box">
+                        <span class="fam-roster-title">📦 其餘未羈絆已登錄萌獸</span>
+                        <span class="fam-roster-count">共 {{ familiarDisplayData.restList.length }} 隻</span>
+                      </div>
                     </div>
 
-                    <!-- 萌獸技能 (若有) -->
-                    <div v-if="fam.skill" class="fam-skill-line">
-                      <span class="fam-skill-label">技能:</span>
-                      <span class="fam-skill-text">{{ fam.skill }}</span>
+                    <div class="familiar-roster-grid">
+                      <div
+                        v-for="(fam, rIdx) in familiarDisplayData.restList"
+                        :key="fam.originalName + rIdx"
+                        class="fam-roster-card"
+                        @mouseenter="onEquipEnter(fam.itemInfo, $event)"
+                        @mousemove="onEquipMove($event)"
+                        @mouseleave="onEquipLeave"
+                      >
+                        <div class="fam-roster-head">
+                          <div class="fam-roster-avatar-box">
+                            <img
+                              :src="fam.icon"
+                              :alt="fam.displayName"
+                              class="fam-roster-avatar-img"
+                              loading="lazy"
+                            />
+                          </div>
+                          <div class="fam-roster-meta">
+                            <div class="fam-roster-name">{{ fam.displayName }}</div>
+                            <div class="fam-roster-sub">
+                              <span>Lv.{{ fam.level }}</span>
+                              <span v-if="fam.optionLevel"> · 潛能 Lv.{{ fam.optionLevel }}</span>
+                              <span> · {{ fam.state === 'linked' ? '已羈絆' : '已登錄' }}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="fam-roster-badges">
+                          <span class="fam-badge" :class="[`badge-grade-${fam.grade}`]">
+                            {{ fam.grade }}
+                          </span>
+                          <span v-if="fam.skill" class="fam-badge">
+                            技能：{{ fam.skill }}
+                          </span>
+                        </div>
+
+                        <div v-if="fam.options.length" class="fam-roster-options">
+                          <div
+                            v-for="(opt, oIdx) in fam.options"
+                            :key="oIdx"
+                            class="fam-roster-opt-line"
+                          >
+                            ▪ {{ opt }}
+                          </div>
+                        </div>
+                        <div v-else class="fam-roster-empty-opt">
+                          沒有潛能資料
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
