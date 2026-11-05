@@ -186,10 +186,18 @@ export const MOB_ICON_MAP: Record<string, string> = {
   肯德熊: 'Mob_Master_Dummy.png',
 
   // === 咖波地下城大冒險 / 聯名限定萌獸 ===
-  小雞盜賊: 'Mob_Punk_Chick.png',
-  小雞: 'Mob_Punk_Chick.png',
   極地北極熊: 'Mob_Snowman.png',
   海豹騎士: 'Mob_Seahorse.png',
+
+  // === 特殊 / 護衛 / 植物 / 兔子系列萌獸 ===
+  芽芽花盆: 'Mob_Potted_Sprout.png',
+  牽牛花盆: 'Mob_Potted_Morning_Glory.png',
+  皇家護衛: 'Mob_Royal_Guard.png',
+  帝國護衛: 'Mob_Imperial_Guard.png',
+  雪兔: 'Mob_White_Hare.png',
+  白兔: 'Mob_White_Hare.png',
+  母砂兔: 'Mob_White_Hare.png',
+  公砂兔: 'Mob_Brown_Hare.png',
 
   // === 奧術之河 (Arcane River) ===
   艾爾達斯: 'Mob_Raging_Erda.png',
