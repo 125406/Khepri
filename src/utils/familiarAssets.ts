@@ -311,6 +311,14 @@ export const MOB_ICON_MAP: Record<string, string> = {
   艾菲尼亞: 'Mob_Ephenia.png',
   烏勒斯: 'Mob_Ursus.png',
   熊王烏勒斯: 'Mob_Ursus.png',
+
+  // === 特殊外觀萌獸 / 軍團長 / 人氣 NPC 造型 ===
+  殺人鯨: 'NPC_Orchid.png',
+  小殺人鯨: 'NPC_Orchid.png',
+  奧爾卡: 'NPC_Orchid.png',
+  史烏人型: 'NPC_Lotus.png',
+  戴米安人型: 'NPC_Damien.png',
+  露希妲人型: 'NPC_Lucid.png',
 }
 
 /**

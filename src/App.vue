@@ -1077,7 +1077,13 @@ const familiarDisplayData = computed(() => {
       }
 
       const rarity = evaluateRarity()
-      const icon = fam?.familiar_icon || getFamiliarIconUrl(originalName) || getFamiliarIconUrl(name) || generateFamiliarCardSvg(originalName || name, rarity)
+      const lookName = fam?.look_name || ''
+      const icon =
+        fam?.familiar_icon ||
+        (lookName ? getFamiliarIconUrl(lookName) : null) ||
+        getFamiliarIconUrl(originalName) ||
+        getFamiliarIconUrl(name) ||
+        generateFamiliarCardSvg(lookName || originalName || name, rarity)
 
       const descLines: string[] = []
       descLines.push(`稀有度：${rarity}`)
