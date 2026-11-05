@@ -2598,15 +2598,10 @@ const hexaStatSlotsDisplay = computed(() => {
                           <h4 class="fam-focus-title">{{ familiarDisplayData.focus.displayName }}</h4>
                           <div class="fam-focus-sub">
                             <span>Lv.{{ familiarDisplayData.focus.level }}</span>
-                            <span v-if="familiarDisplayData.focus.optionLevel"> · 潛能 Lv.{{ familiarDisplayData.focus.optionLevel }}</span>
-                            <span v-if="familiarDisplayData.focus.grade"> · {{ familiarDisplayData.focus.grade }}</span>
                           </div>
 
                           <div class="fam-focus-badges">
                             <span v-if="familiarDisplayData.focus.isActive" class="fam-badge good">召喚中</span>
-                            <span class="fam-badge" :class="[`badge-grade-${familiarDisplayData.focus.grade}`]">
-                              {{ familiarDisplayData.focus.grade }}
-                            </span>
                             <span v-if="familiarDisplayData.focus.skill" class="fam-badge">
                               技能：{{ familiarDisplayData.focus.skill }}
                             </span>
@@ -2677,7 +2672,6 @@ const hexaStatSlotsDisplay = computed(() => {
                                 </div>
                                 <div class="fam-slot-sub">
                                   Lv.{{ slotItem.entry.level }}
-                                  <span v-if="slotItem.entry.grade">｜{{ slotItem.entry.grade }}</span>
                                 </div>
                               </div>
                             </div>
@@ -2750,17 +2744,13 @@ const hexaStatSlotsDisplay = computed(() => {
                             <div class="fam-roster-name">{{ fam.displayName }}</div>
                             <div class="fam-roster-sub">
                               <span>Lv.{{ fam.level }}</span>
-                              <span v-if="fam.optionLevel"> · 潛能 Lv.{{ fam.optionLevel }}</span>
                               <span> · {{ fam.state === 'linked' ? '已羈絆' : '已登錄' }}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div class="fam-roster-badges">
-                          <span class="fam-badge" :class="[`badge-grade-${fam.grade}`]">
-                            {{ fam.grade }}
-                          </span>
-                          <span v-if="fam.skill" class="fam-badge">
+                        <div v-if="fam.skill" class="fam-roster-badges">
+                          <span class="fam-badge">
                             技能：{{ fam.skill }}
                           </span>
                         </div>
