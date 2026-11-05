@@ -189,6 +189,10 @@ export const MOB_ICON_MAP: Record<string, string> = {
   極地北極熊: 'Mob_Snowman.png',
   海豹騎士: 'Mob_Seahorse.png',
 
+  // === 水世界 (Aqua Road) ===
+  花鯰魚: 'Mob_Flower_Fish.png',
+  鯰魚: 'Mob_Flower_Fish.png',
+
   // === 特殊 / 護衛 / 植物 / 兔子系列萌獸 ===
   芽芽花盆: 'Mob_Potted_Sprout.png',
   牽牛花盆: 'Mob_Potted_Morning_Glory.png',
@@ -224,6 +228,34 @@ export const MOB_ICON_MAP: Record<string, string> = {
   蜘蛛阿蘭妮亞: 'Mob_Aranea.png',
   光之執行者: 'Mob_Keeper_of_Light.png',
   暗之執行者: 'Mob_Keeper_of_Darkness.png',
+
+  // === 格蘭蒂斯 (Grandis) - 賽爾尼溫 / 阿爾克斯 / 奧迪溫 / 桃源境 / 亞爾特利亞 ===
+  // 桃源境 (Shangri-La)
+  墨翅貓頭鷹: 'Mob_Ink-Winged_Owl.png',
+  墨水痕雪貂: 'Mob_Inkblot_Sable.png',
+  食影貂: 'Mob_Inkblot_Sable.png',
+  翅影梟: 'Mob_Ink-Winged_Owl.png',
+  黑影蝶: 'Mob_Ink-Shaded_Butterfly.png',
+  墨影鶴: 'Mob_Ink-Shaded_Red-Crowned_Crane.png',
+  枯萎之春研究員: 'Mob_Withered_Spring_Researcher.png',
+  殘破之冬研究員: 'Mob_Harsh_Winter_Researcher.png',
+  無光之夏研究員: 'Mob_Gentle_Summer_Researcher.png',
+  無色之秋研究員: 'Mob_Drowsy_Autumn_Researcher.png',
+  // 賽爾尼溫 (Cernium) & 阿爾克斯 (Hotel Arcus) & 奧迪溫 (Odium) & 亞爾特利亞 (Arteria)
+  好奇的學者幽靈: 'Mob_Curious_Scholar_Ghost.png',
+  學者幽靈: 'Mob_Curious_Scholar_Ghost.png',
+  沙刃暴掠軍: 'Mob_Sandblade_Marauder.png',
+  沙漠之刃: 'Mob_Sandblade_Marauder.png',
+  鐵拳掠奪者: 'Mob_Ironshot_Desperado.png',
+  列車長機器人: 'Mob_Conductorbot.png',
+  警犬機器人: 'Mob_Houndbot.png',
+  石頭奇異鳥: 'Mob_Stone_Kiwi.png',
+  奧迪溫斥候: 'Mob_Odium%27s_Scout.png',
+  強化鑽石守護者: 'Mob_Enhanced_Diamond_Guardian.png',
+  雷普近戰兵: 'Mob_Angler_Melee_Tester.png',
+  雷普炸彈兵: 'Mob_Angler_Bomb_Tester.png',
+  高等雷普法師: 'Mob_High_Flora_Magician.png',
+  高等雷普長劍士: 'Mob_High_Flora_Longswordsman.png',
 
   // === 全版本核心各大 BOSS 與軍團長 ===
   殘暴炎魔: 'Mob_Zakum.png',
