@@ -77,9 +77,6 @@ const closeBossDetail = () => {
           <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
             BOSS 血量表 / 裝備需求層級排行
           </h1>
-          <p class="text-slate-300 text-sm sm:text-base mt-2 max-w-2xl leading-relaxed">
-            依照巴哈姆特精華整理（作者最後的Mercy / zxcvll1379），以單人通關時間約為限制時間的 2/3（約20分鐘）為基準，精確衡量防禦率、機制抗性與實質血量排序。
-          </p>
         </div>
       </div>
     </header>
