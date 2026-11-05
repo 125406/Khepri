@@ -1517,4 +1517,33 @@ watch(
   border-color: #6366f1;
   color: #fff;
 }
+
+@media (max-width: 768px) {
+  .avatar-stage-card {
+    position: static;
+  }
+  .stage-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .bg-selector, .view-controls {
+    flex-wrap: wrap;
+  }
+  .avatar-canvas {
+    height: 320px;
+  }
+  .slot-tabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+  }
+  .slot-tab-btn {
+    flex-shrink: 0;
+  }
+  .catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    max-height: 420px;
+  }
+}
 </style>

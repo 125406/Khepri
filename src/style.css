@@ -4567,3 +4567,175 @@ code {
   border: 1px solid rgba(168, 85, 247, 0.25);
 }
 
+/* ========================================================================== */
+/* Mobile Responsive Overhaul (RWD 響應式優化) */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .app-shell {
+    padding: 12px 10px 48px;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* 頂部主選單 */
+  .top-feature-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 6px;
+    gap: 6px;
+    scrollbar-width: none;
+  }
+  .top-feature-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .feature-nav-btn {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  /* 搜尋列 */
+  .search-section {
+    padding: 14px 12px;
+  }
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .search-field-group,
+  .date-field-group {
+    width: 100%;
+    min-width: 0;
+  }
+  .search-submit {
+    width: 100%;
+  }
+
+  /* 角色頂部卡片 */
+  .hero-card {
+    padding: 16px 12px;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .character-name {
+    font-size: 1.45rem;
+  }
+  .character-details-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .badges-row {
+    justify-content: center;
+  }
+  .union-row {
+    justify-content: center;
+  }
+
+  /* 戰力 / 屬性面板 */
+  .stat-metric-card {
+    padding: 12px;
+  }
+  .stat-metric-value {
+    font-size: 1.1rem;
+    word-break: break-all;
+  }
+  .stats-highlight-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* 裝備視窗 (6x6 與 6x4 水平捲動容器保護) */
+  .maple-window-card {
+    width: 100%;
+    max-width: 100%;
+  }
+  .maple-window-body {
+    padding: 10px 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .maple-6x6-grid {
+    grid-template-columns: repeat(6, 46px);
+    grid-template-rows: repeat(6, 50px);
+    gap: 4px;
+    width: max-content;
+    margin: 0 auto;
+  }
+  .maple-portrait-img {
+    width: 100px;
+    height: 100px;
+  }
+  .maple-coord-grid {
+    grid-template-columns: repeat(6, 48px);
+    grid-template-rows: repeat(4, 48px);
+    gap: 5px;
+    width: max-content;
+    margin: 0 auto;
+  }
+
+  /* 裝備列表格 */
+  .equipment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 內容切換分頁標籤 */
+  .content-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    gap: 6px;
+    scrollbar-width: none;
+  }
+  .content-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+  }
+
+  /* 抽獎模擬器與戰歷彈窗 */
+  .gacha-modal-box,
+  .history-modal-box {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    padding: 16px 12px !important;
+    margin: 0 auto;
+  }
+  .royal-draw-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-highlight-grid {
+    grid-template-columns: 1fr;
+  }
+  .maple-6x6-grid {
+    grid-template-columns: repeat(6, 42px);
+    grid-template-rows: repeat(6, 46px);
+    gap: 3px;
+  }
+  .maple-coord-grid {
+    grid-template-columns: repeat(6, 42px);
+    grid-template-rows: repeat(4, 42px);
+    gap: 3px;
+  }
+}
+
+
