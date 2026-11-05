@@ -52,6 +52,7 @@ export const MOB_ICON_MAP: Record<string, string> = {
   克朗: 'Mob_Clang.png',
   青蛇: 'Mob_Jr._Necki.png',
   木面怪人: 'Mob_Wooden_Mask.png',
+  石面怪人: 'Mob_Rocky_Mask.png',
   蝙蝠魔: 'Mob_Jr._Balrog.png',
   蝙蝠魔王: 'Mob_Balrog.png',
   巴洛古: 'Mob_Balrog.png',
@@ -73,6 +74,7 @@ export const MOB_ICON_MAP: Record<string, string> = {
   青龍: 'Mob_Drake.png',
   牛頭魔: 'Mob_Tauromacis.png',
   牛頭武士: 'Mob_Taurospear.png',
+  月牙牛魔王: 'Mob_Taurospear.png',
 
   // === 天空之城 / 水世界 / 冰原雪域 ===
   星光精靈: 'Mob_Star_Pixie.png',
@@ -231,6 +233,7 @@ export const MOB_ICON_MAP: Record<string, string> = {
 
   // === 格蘭蒂斯 (Grandis) - 賽爾尼溫 / 阿爾克斯 / 奧迪溫 / 桃源境 / 亞爾特利亞 ===
   // 桃源境 (Shangri-La)
+  桃源境的襲擊者: 'Mob_Shangri-La_Assailant.png',
   墨翅貓頭鷹: 'Mob_Ink-Winged_Owl.png',
   墨水痕雪貂: 'Mob_Inkblot_Sable.png',
   食影貂: 'Mob_Inkblot_Sable.png',
@@ -241,7 +244,9 @@ export const MOB_ICON_MAP: Record<string, string> = {
   殘破之冬研究員: 'Mob_Harsh_Winter_Researcher.png',
   無光之夏研究員: 'Mob_Gentle_Summer_Researcher.png',
   無色之秋研究員: 'Mob_Drowsy_Autumn_Researcher.png',
-  // 賽爾尼溫 (Cernium) & 阿爾克斯 (Hotel Arcus) & 奧迪溫 (Odium) & 亞爾特利亞 (Arteria)
+  // 賽爾尼溫 (Cernium) & 阿爾克斯 (Hotel Arcus) & 奧迪溫 (Odium) & 亞爾特利亞 (Arteria) & 卡西翁 (Carcion)
+  黑暗侵襲的怪鳥: 'Mob_Monstrous_Shadow_Bird.png',
+  暗黑怪鳥: 'Mob_Monstrous_Shadow_Bird.png',
   好奇的學者幽靈: 'Mob_Curious_Scholar_Ghost.png',
   學者幽靈: 'Mob_Curious_Scholar_Ghost.png',
   沙刃暴掠軍: 'Mob_Sandblade_Marauder.png',
