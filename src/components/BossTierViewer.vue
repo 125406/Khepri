@@ -62,25 +62,6 @@ const closeBossDetail = () => {
 
 <template>
   <div class="boss-tier-container max-w-7xl mx-auto px-4 py-6">
-    <!-- Header banner -->
-    <header class="relative rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-8 border border-indigo-500/30 shadow-2xl overflow-hidden mb-8">
-      <div class="absolute -right-16 -top-16 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute -left-16 -bottom-16 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold tracking-wider uppercase border border-indigo-500/40 mb-3">
-            <span>⚔️ 巴哈精華推薦基準</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-            <span>2026 最新貝蘿娜 / 瑪麗西亞全版本</span>
-          </div>
-          <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            BOSS 血量表 / 裝備需求層級排行
-          </h1>
-        </div>
-      </div>
-    </header>
-
     <!-- Toolbar: Filters, search, and view switcher -->
     <div class="bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl p-4 mb-6 shadow-lg flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
       <!-- Search input -->
