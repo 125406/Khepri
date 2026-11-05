@@ -1022,9 +1022,7 @@ const familiarDisplayData = computed(() => {
 
       const name = fam?.familiar_nickname || fam?.familiar_name || slotRaw?.familiar_name || '萌獸'
       const originalName = fam?.familiar_name || slotRaw?.familiar_name || ''
-      const grade = fam?.familiar_grade || (fam?.familiar_special_flag === 'true' ? '特殊' : '普通')
       const lv = fam?.familiar_level || 1
-      const icon = fam?.familiar_icon || getFamiliarIconUrl(originalName) || getFamiliarIconUrl(name) || generateFamiliarCardSvg(originalName || name, grade)
 
       const opts: string[] = []
       if (fam?.option && Array.isArray(fam.option)) {
@@ -1043,8 +1041,46 @@ const familiarDisplayData = computed(() => {
         opts.push(...legacyOpts)
       }
 
+      // 判斷萌獸稀有度 (普通、特殊、稀有、罕見、傳說)
+      const evaluateRarity = (): '普通' | '特殊' | '稀有' | '罕見' | '傳說' => {
+        const optStr = opts.join(' ')
+        if (
+          fam?.familiar_special_flag === 'true' ||
+          optStr.includes('40%') ||
+          optStr.includes('35%') ||
+          optStr.includes('14%') ||
+          optStr.includes('20%') ||
+          optStr.includes('45%') ||
+          optStr.includes('9%')
+        ) {
+          return '傳說'
+        }
+        if (
+          optStr.includes('30%') ||
+          optStr.includes('7%') ||
+          optStr.includes('8%') ||
+          optStr.includes('15%')
+        ) {
+          return '罕見'
+        }
+        if (
+          optStr.includes('4%') ||
+          optStr.includes('5%') ||
+          optStr.includes('6%') ||
+          optStr.includes('被動技能') ||
+          optStr.includes('最終傷害 (%) +2%') ||
+          optStr.includes('最終傷害 +2%')
+        ) {
+          return '特殊'
+        }
+        return '普通'
+      }
+
+      const rarity = evaluateRarity()
+      const icon = fam?.familiar_icon || getFamiliarIconUrl(originalName) || getFamiliarIconUrl(name) || generateFamiliarCardSvg(originalName || name, rarity)
+
       const descLines: string[] = []
-      descLines.push(`階級：${grade}`)
+      descLines.push(`稀有度：${rarity}`)
       descLines.push(`等級：Lv.${lv}`)
       if (fam?.skill_name || fam?.familiar_skill) {
         descLines.push(`萌獸技能：${fam.skill_name || fam.familiar_skill}`)
@@ -1063,7 +1099,7 @@ const familiarDisplayData = computed(() => {
         item_icon: icon,
         item_description: descLines.join('\n'),
       })
-      equipItem.potential_option_grade = grade
+      equipItem.potential_option_grade = rarity
       equipItem.potential_option_1 = opts[0] || null
       equipItem.potential_option_2 = opts[1] || null
       equipItem.potential_option_3 = opts[2] || null
@@ -1078,7 +1114,8 @@ const familiarDisplayData = computed(() => {
         name,
         originalName,
         displayName: originalName && name !== originalName ? `${name} (${originalName})` : name,
-        grade,
+        grade: rarity,
+        rarity,
         level: lv,
         optionLevel: fam?.option_level || null,
         icon,
@@ -1170,22 +1207,32 @@ const familiarDisplayData = computed(() => {
   if (legacyList.length > 0) {
     const list = legacyList.map((fam, idx) => {
       const name = fam.familiar_name
-      const grade = fam.familiar_grade || '普通'
-      const icon = fam.familiar_icon || getFamiliarIconUrl(name) || generateFamiliarCardSvg(name, grade)
       const opts = [
         fam.familiar_option_1 || fam.option_1,
         fam.familiar_option_2 || fam.option_2,
         fam.familiar_option_3 || fam.option_3,
       ].filter(Boolean) as string[]
 
+      const optStr = opts.join(' ')
+      let rarity: '普通' | '特殊' | '稀有' | '罕見' | '傳說' = '普通'
+      if (optStr.includes('40%') || optStr.includes('35%') || optStr.includes('14%') || optStr.includes('20%') || optStr.includes('45%') || optStr.includes('9%')) {
+        rarity = '傳說'
+      } else if (optStr.includes('30%') || optStr.includes('7%') || optStr.includes('8%') || optStr.includes('15%')) {
+        rarity = '罕見'
+      } else if (optStr.includes('4%') || optStr.includes('5%') || optStr.includes('6%') || optStr.includes('被動技能')) {
+        rarity = '特殊'
+      }
+
+      const icon = fam.familiar_icon || getFamiliarIconUrl(name) || generateFamiliarCardSvg(name, rarity)
+
       const equipItem = makeEmptyEquipmentItem({
         item_equipment_part: `萌獸 (Slot ${idx + 1})`,
         item_equipment_slot: `萌獸${idx + 1}`,
         item_name: name,
         item_icon: icon,
-        item_description: `階級：${grade}\n等級：Lv.${fam.familiar_level || 1}`,
+        item_description: `稀有度：${rarity}\n等級：Lv.${fam.familiar_level || 1}`,
       })
-      equipItem.potential_option_grade = grade
+      equipItem.potential_option_grade = rarity
       equipItem.potential_option_1 = opts[0] || null
       equipItem.potential_option_2 = opts[1] || null
       equipItem.potential_option_3 = opts[2] || null
@@ -1195,7 +1242,8 @@ const familiarDisplayData = computed(() => {
         name,
         originalName: name,
         displayName: name,
-        grade,
+        grade: rarity,
+        rarity,
         level: fam.familiar_level || 1,
         optionLevel: null,
         icon,
@@ -2602,6 +2650,9 @@ const hexaStatSlotsDisplay = computed(() => {
 
                           <div class="fam-focus-badges">
                             <span v-if="familiarDisplayData.focus.isActive" class="fam-badge good">召喚中</span>
+                            <span class="fam-badge" :class="[`badge-grade-${familiarDisplayData.focus.rarity}`]">
+                              {{ familiarDisplayData.focus.rarity }}
+                            </span>
                             <span v-if="familiarDisplayData.focus.skill" class="fam-badge">
                               技能：{{ familiarDisplayData.focus.skill }}
                             </span>
@@ -2671,7 +2722,8 @@ const hexaStatSlotsDisplay = computed(() => {
                                   {{ slotItem.entry.displayName }}
                                 </div>
                                 <div class="fam-slot-sub">
-                                  Lv.{{ slotItem.entry.level }}
+                                  <span>Lv.{{ slotItem.entry.level }}</span>
+                                  <span>｜{{ slotItem.entry.rarity }}</span>
                                 </div>
                               </div>
                             </div>
@@ -2744,13 +2796,17 @@ const hexaStatSlotsDisplay = computed(() => {
                             <div class="fam-roster-name">{{ fam.displayName }}</div>
                             <div class="fam-roster-sub">
                               <span>Lv.{{ fam.level }}</span>
+                              <span> · {{ fam.rarity }}</span>
                               <span> · {{ fam.state === 'linked' ? '已羈絆' : '已登錄' }}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div v-if="fam.skill" class="fam-roster-badges">
-                          <span class="fam-badge">
+                        <div class="fam-roster-badges">
+                          <span class="fam-badge" :class="[`badge-grade-${fam.rarity}`]">
+                            {{ fam.rarity }}
+                          </span>
+                          <span v-if="fam.skill" class="fam-badge">
                             技能：{{ fam.skill }}
                           </span>
                         </div>
