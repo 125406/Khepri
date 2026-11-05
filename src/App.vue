@@ -3394,6 +3394,7 @@ const hexaStatSlotsDisplay = computed(() => {
 
           <!-- 聯盟戰地 22x20 實際拼盤樣貌 (Synergy Grid) -->
           <UnionBoardViewer
+            :union-raider="profile.unionRaider"
             :blocks="profile.unionRaider?.union_block"
             :occupied-stats="profile.unionRaider?.union_occupied_stat"
             :raider-stats="profile.unionRaider?.union_raider_stat"

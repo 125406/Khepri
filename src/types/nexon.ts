@@ -289,12 +289,25 @@ export interface UnionRaiderBlock {
   block_position?: Array<{ x: number; y: number }>
 }
 
+export interface UnionRaiderPreset {
+  union_raider_stat?: string[]
+  union_occupied_stat?: string[]
+  union_inner_stat?: Array<{ stat_field_id: string; stat_field_effect: string }>
+  union_block?: UnionRaiderBlock[]
+}
+
 export interface UserUnionRaider {
   date: string | null
   union_raider_stat?: string[]
   union_occupied_stat?: string[]
+  union_inner_stat?: Array<{ stat_field_id: string; stat_field_effect: string }>
   union_block?: UnionRaiderBlock[]
   use_preset_no?: string | number
+  union_raider_preset_1?: UnionRaiderPreset | null
+  union_raider_preset_2?: UnionRaiderPreset | null
+  union_raider_preset_3?: UnionRaiderPreset | null
+  union_raider_preset_4?: UnionRaiderPreset | null
+  union_raider_preset_5?: UnionRaiderPreset | null
 }
 
 export interface AndroidPresetInfo {

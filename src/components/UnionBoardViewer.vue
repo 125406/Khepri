@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { UnionRaiderBlock } from '../types/nexon'
+import type { UnionRaiderBlock, UserUnionRaider } from '../types/nexon'
 
 const props = defineProps<{
+  unionRaider?: UserUnionRaider | null
   blocks?: UnionRaiderBlock[]
   occupiedStats?: string[]
   raiderStats?: string[]
@@ -12,6 +13,46 @@ const props = defineProps<{
 // 官方座標轉換：col = x + 12, row = 11 - y
 const COLS = 22
 const ROWS = 20
+
+// 預設集 (Preset 1~5) 切換狀態，預設使用官方目前的 use_preset_no 或 1
+const activePresetNo = ref<number>(
+  Number(props.unionRaider?.use_preset_no) || 1
+)
+
+// 取得當前所選預設集的資料 (若無 preset 資料則回退至主 blocks / stats)
+const currentPresetData = computed(() => {
+  const raider = props.unionRaider
+  if (!raider) {
+    return {
+      blocks: props.blocks || [],
+      occupiedStats: props.occupiedStats || [],
+      raiderStats: props.raiderStats || [],
+    }
+  }
+
+  const pKey = `union_raider_preset_${activePresetNo.value}` as
+    | 'union_raider_preset_1'
+    | 'union_raider_preset_2'
+    | 'union_raider_preset_3'
+    | 'union_raider_preset_4'
+    | 'union_raider_preset_5'
+
+  const targetPreset = raider[pKey]
+  if (targetPreset && targetPreset.union_block && targetPreset.union_block.length > 0) {
+    return {
+      blocks: targetPreset.union_block,
+      occupiedStats: targetPreset.union_occupied_stat || [],
+      raiderStats: targetPreset.union_raider_stat || [],
+    }
+  }
+
+  // 若當前所選編號剛好是當前生效設定或該 preset 欄位為空，回退使用根層級 block/stats
+  return {
+    blocks: raider.union_block || props.blocks || [],
+    occupiedStats: raider.union_occupied_stat || props.occupiedStats || [],
+    raiderStats: raider.union_raider_stat || props.raiderStats || [],
+  }
+})
 
 // 顏色映射：依職業群區分方塊色彩
 function getBlockColor(type: string | null | undefined): { bg: string; border: string; text: string } {
@@ -61,11 +102,14 @@ interface OccupiedCell {
   isControlPoint: boolean
 }
 
+const activeBlocks = computed(() => currentPresetData.value.blocks)
+
 const placedCells = computed<OccupiedCell[]>(() => {
   const result: OccupiedCell[] = []
-  if (!props.blocks || props.blocks.length === 0) return result
+  const blocks = activeBlocks.value
+  if (!blocks || blocks.length === 0) return result
 
-  for (const block of props.blocks) {
+  for (const block of blocks) {
     const color = getBlockColor(block.block_type)
     const positions = block.block_position || []
     const ctrl = block.block_control_point
@@ -93,8 +137,9 @@ const placedCells = computed<OccupiedCell[]>(() => {
 // 統計資訊
 const totalOccupiedCount = computed(() => placedCells.value.length)
 const placedCharacterCount = computed(() => {
-  if (!props.blocks) return 0
-  return props.blocks.filter((b) => b.block_position && b.block_position.length > 0).length
+  const blocks = activeBlocks.value
+  if (!blocks) return 0
+  return blocks.filter((b) => b.block_position && b.block_position.length > 0).length
 })
 </script>
 
@@ -108,6 +153,31 @@ const placedCharacterCount = computed(() => {
           <span>聯盟戰地棋盤 (Synergy Grid)</span>
         </h3>
         <span class="board-subtitle">22 × 20 攻擊隊拼盤實際擺放</span>
+      </div>
+
+      <!-- 戰地 PRESET 1 ~ 5 切換分頁按鈕列 -->
+      <div class="preset-selector-row">
+        <span class="preset-title-label">PRESET:</span>
+        <div class="preset-btn-group">
+          <button
+            v-for="pNo in ([1, 2, 3, 4, 5] as const)"
+            :key="pNo"
+            type="button"
+            class="union-preset-btn"
+            :class="{
+              active: activePresetNo === pNo,
+              'is-current-active': Number(unionRaider?.use_preset_no) === pNo
+            }"
+            @click="activePresetNo = pNo"
+          >
+            <span>PRESET {{ pNo }}</span>
+            <span
+              v-if="Number(unionRaider?.use_preset_no) === pNo"
+              class="active-preset-dot"
+              title="遊戲內當前生效設定"
+            >●</span>
+          </button>
+        </div>
       </div>
 
       <div class="board-stats-badges">
@@ -135,15 +205,41 @@ const placedCharacterCount = computed(() => {
     <!-- 22x20 戰地棋盤畫布外層滾動容器 -->
     <div class="board-canvas-scroll-wrapper">
       <div class="union-grid-stage">
-        <!-- 1. 背景 8 大外圈 + 8 大內圈固定區域名稱標籤 -->
-        <div class="outer-label-tag label-boss-dmg">BOSS 傷害</div>
-        <div class="outer-label-tag label-buff-dur">加持時間</div>
-        <div class="outer-label-tag label-crit-dmg">爆擊傷害</div>
-        <div class="outer-label-tag label-ied">無視防禦</div>
-        <div class="outer-label-tag label-exp">獲得經驗值</div>
-        <div class="outer-label-tag label-crit-rate">爆擊機率</div>
-        <div class="outer-label-tag label-abnormal">狀態抗性</div>
-        <div class="outer-label-tag label-normal-dmg">一般怪傷害</div>
+        <!-- 1. 外圍 8 大能力值區域文字標籤 (加粗、高對比、背景膠囊徽章) -->
+        <div class="outer-label-tag label-boss-dmg">
+          <span class="label-badge">BOSS 傷害</span>
+        </div>
+        <div class="outer-label-tag label-buff-dur">
+          <span class="label-badge">加持時間</span>
+        </div>
+        <div class="outer-label-tag label-crit-dmg">
+          <span class="label-badge">爆擊傷害</span>
+        </div>
+        <div class="outer-label-tag label-ied">
+          <span class="label-badge">無視防禦</span>
+        </div>
+        <div class="outer-label-tag label-exp">
+          <span class="label-badge">獲得經驗值</span>
+        </div>
+        <div class="outer-label-tag label-crit-rate">
+          <span class="label-badge">爆擊機率</span>
+        </div>
+        <div class="outer-label-tag label-abnormal">
+          <span class="label-badge">狀態抗性</span>
+        </div>
+        <div class="outer-label-tag label-normal-dmg">
+          <span class="label-badge">一般怪傷害</span>
+        </div>
+
+        <!-- 內圈 8 大基礎屬性標籤 -->
+        <div class="inner-stat-label inner-str">STR</div>
+        <div class="inner-stat-label inner-dex">DEX</div>
+        <div class="inner-stat-label inner-int">INT</div>
+        <div class="inner-stat-label inner-luk">LUK</div>
+        <div class="inner-stat-label inner-hp">HP</div>
+        <div class="inner-stat-label inner-mp">MP</div>
+        <div class="inner-stat-label inner-att">攻擊力</div>
+        <div class="inner-stat-label inner-matt">魔力</div>
 
         <!-- 2. 棋盤中央 4 格起點高光區域 (x: 0, -1; y: 0, 1) -> col: 11, 12; row: 10, 11 -->
         <div class="center-core-glow"></div>
@@ -179,6 +275,26 @@ const placedCharacterCount = computed(() => {
             <!-- 核心樞紐微小指示光點 -->
             <span v-if="cell.isControlPoint" class="control-pivot-dot"></span>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 當前 Preset 佔領與隊員效果摘要 (若有) -->
+    <div v-if="currentPresetData.occupiedStats.length > 0 || currentPresetData.raiderStats.length > 0" class="preset-stats-brief">
+      <div v-if="currentPresetData.occupiedStats.length > 0" class="stats-brief-row">
+        <span class="brief-title">🗺️ Preset {{ activePresetNo }} 棋盤佔領效果：</span>
+        <div class="brief-chips">
+          <span v-for="(st, idx) in currentPresetData.occupiedStats" :key="idx" class="brief-chip chip-occupied">
+            {{ st }}
+          </span>
+        </div>
+      </div>
+      <div v-if="currentPresetData.raiderStats.length > 0" class="stats-brief-row">
+        <span class="brief-title">🛡️ Preset {{ activePresetNo }} 隊員效果：</span>
+        <div class="brief-chips">
+          <span v-for="(st, idx) in currentPresetData.raiderStats" :key="idx" class="brief-chip chip-raider">
+            {{ st }}
+          </span>
         </div>
       </div>
     </div>
@@ -239,6 +355,67 @@ const placedCharacterCount = computed(() => {
 .board-subtitle {
   font-size: 0.8rem;
   color: #94a3b8;
+}
+
+/* 戰地 PRESET 1 ~ 5 切換列 */
+.preset-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 4px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.preset-title-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.preset-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.union-preset-btn {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(30, 41, 59, 0.6);
+  color: #cbd5e1;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.16s ease;
+}
+
+.union-preset-btn:hover {
+  background: rgba(79, 70, 229, 0.3);
+  border-color: #818cf8;
+  color: #ffffff;
+}
+
+.union-preset-btn.active {
+  background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+  border-color: #a5b4fc;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.45);
+}
+
+.active-preset-dot {
+  color: #34d399;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.union-preset-btn.active .active-preset-dot {
+  color: #6ee7b7;
 }
 
 .board-stats-badges {
@@ -320,26 +497,74 @@ const placedCharacterCount = computed(() => {
   box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 12px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* 8 大外圈區域標籤浮水印 */
+/* 8 大外圈區域標籤 (高對比膠囊徽章，保證清晰易讀) */
 .outer-label-tag {
   position: absolute;
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: rgba(148, 163, 184, 0.28);
   pointer-events: none;
-  z-index: 2;
-  letter-spacing: 0.05em;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  z-index: 5;
 }
 
-.label-boss-dmg { top: 12px; right: 24px; }
-.label-buff-dur { top: 40%; right: 14px; transform: translateY(-50%); }
-.label-crit-dmg { bottom: 12px; right: 24px; }
-.label-ied { bottom: 12px; left: 24px; }
-.label-exp { top: 40%; left: 14px; transform: translateY(-50%); }
-.label-crit-rate { top: 12px; left: 24px; }
-.label-abnormal { top: 12px; left: 45%; transform: translateX(-50%); }
-.label-normal-dmg { bottom: 12px; left: 45%; transform: translateX(-50%); }
+.label-badge {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 900;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+  padding: 3px 8px;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.label-boss-dmg { top: 12px; right: 20px; }
+.label-boss-dmg .label-badge { border-color: rgba(245, 158, 11, 0.6); color: #fde047; }
+
+.label-buff-dur { top: 50%; right: 12px; transform: translateY(-50%); }
+.label-buff-dur .label-badge { border-color: rgba(168, 85, 247, 0.6); color: #e9d5ff; }
+
+.label-crit-dmg { bottom: 12px; right: 20px; }
+.label-crit-dmg .label-badge { border-color: rgba(239, 68, 68, 0.6); color: #fca5a5; }
+
+.label-ied { bottom: 12px; left: 20px; }
+.label-ied .label-badge { border-color: rgba(56, 189, 248, 0.6); color: #bae6fd; }
+
+.label-exp { top: 50%; left: 12px; transform: translateY(-50%); }
+.label-exp .label-badge { border-color: rgba(34, 197, 94, 0.6); color: #86efac; }
+
+.label-crit-rate { top: 12px; left: 20px; }
+.label-crit-rate .label-badge { border-color: rgba(236, 72, 153, 0.6); color: #fbcfe8; }
+
+.label-abnormal { top: 12px; left: 50%; transform: translateX(-50%); }
+.label-abnormal .label-badge { border-color: rgba(148, 163, 184, 0.6); color: #f1f5f9; }
+
+.label-normal-dmg { bottom: 12px; left: 50%; transform: translateX(-50%); }
+.label-normal-dmg .label-badge { border-color: rgba(251, 146, 60, 0.6); color: #fed7aa; }
+
+/* 內圈 8 大屬性標籤 */
+.inner-stat-label {
+  position: absolute;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: rgba(226, 232, 240, 0.85);
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  pointer-events: none;
+  z-index: 4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.inner-str  { top: 28%; left: 42%; }
+.inner-dex  { top: 28%; right: 42%; }
+.inner-int  { bottom: 28%; left: 42%; }
+.inner-luk  { bottom: 28%; right: 42%; }
+.inner-hp   { top: 38%; left: 30%; }
+.inner-mp   { bottom: 38%; left: 30%; }
+.inner-att  { top: 38%; right: 28%; }
+.inner-matt { bottom: 38%; right: 28%; }
 
 /* 中心起點高光 */
 .center-core-glow {
@@ -423,6 +648,59 @@ const placedCharacterCount = computed(() => {
   box-shadow: 0 0 6px #ffffff;
 }
 
+/* 當前 Preset 佔領與隊員效果摘要列 */
+.preset-stats-brief {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.65);
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.stats-brief-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.brief-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+.brief-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.brief-chip {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.35;
+}
+
+.chip-occupied {
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+}
+
+.chip-raider {
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #bae6fd;
+}
+
 /* Tooltip */
 .block-hover-tooltip {
   position: fixed;
@@ -470,6 +748,16 @@ const placedCharacterCount = computed(() => {
 @media (max-width: 768px) {
   .union-board-viewer {
     padding: 12px 8px;
+  }
+  .board-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .preset-selector-row {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .union-grid-stage {
     width: 550px;
