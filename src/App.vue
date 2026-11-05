@@ -5,6 +5,7 @@ import CharacterDollStudio from './components/CharacterDollStudio.vue'
 import GachaSimulator from './components/GachaSimulator.vue'
 import BossTierViewer from './components/BossTierViewer.vue'
 import RankingStudio from './components/RankingStudio.vue'
+import UnionBoardViewer from './components/UnionBoardViewer.vue'
 import { fetchFullCharacterProfile, fetchRecentExpHistory, enrichUnionChampions } from './services/nexonApi'
 import { recordSearchedCharacter } from './services/communityRankService'
 import type {
@@ -3246,6 +3247,13 @@ const hexaStatSlotsDisplay = computed(() => {
               </div>
             </div>
           </div>
+
+          <!-- 聯盟戰地 22x20 實際拼盤樣貌 (Synergy Grid) -->
+          <UnionBoardViewer
+            :blocks="profile.unionRaider?.union_block"
+            :occupied-stats="profile.unionRaider?.union_occupied_stat"
+            :raider-stats="profile.unionRaider?.union_raider_stat"
+          />
 
           <!-- 戰地全體角色棋盤名單 -->
           <div class="union-all-blocks-block">
