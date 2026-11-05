@@ -1027,9 +1027,33 @@ const familiarDisplayData = computed(() => {
       const opts: string[] = []
       if (fam?.option && Array.isArray(fam.option)) {
         for (const o of fam.option) {
-          if (o.option_name) {
-            const valStr = o.option_value ? ` ${o.option_value.startsWith('+') ? '' : '+'}${o.option_value}` : ''
-            opts.push(`${o.option_name}${valStr}`)
+          if (!o.option_name) continue
+          const rawName = o.option_name.trim()
+          const val = (o.option_value ?? '').trim()
+
+          // 1. 如果是狀態異常或本身不帶數值的詞條（如「封印效果」、「緩慢效果」、「中毒效果」等），不附加 +0
+          const isEffectOrNoValue =
+            rawName.endsWith('效果') ||
+            rawName.includes('被動技能') ||
+            rawName.includes('機率') ||
+            val === '' ||
+            val === '0'
+
+          if (isEffectOrNoValue) {
+            // 對於 DEX (%) 或 最終傷害 (%) 等，若官方 API 因未鑑定或未解鎖回傳 0，則乾淨顯示名稱或顯示「未鑑定」
+            if (val === '0' && (rawName.endsWith('效果') || !rawName.includes('%'))) {
+              opts.push(rawName)
+            } else if (val === '0') {
+              opts.push(`${rawName.replace(/\s*\(\s*%\s*\)/g, '')} (未激活)`)
+            } else {
+              opts.push(rawName)
+            }
+          } else {
+            const hasPercent = rawName.includes('%') || rawName.includes('％')
+            const cleanName = rawName.replace(/\s*\(\s*%\s*\)/g, '').trim()
+            const sign = !val.startsWith('-') && !val.startsWith('+') ? '+' : ''
+            const suffix = hasPercent && !val.endsWith('%') ? '%' : ''
+            opts.push(`${cleanName} ${sign}${val}${suffix}`.trim())
           }
         }
       } else if (fam) {
