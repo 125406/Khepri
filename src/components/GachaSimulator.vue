@@ -54,10 +54,10 @@ type RoyalPoolKey = 'femaleHair' | 'femaleFace' | 'maleHair' | 'maleFace'
 
 const ROYAL_POOLS: Record<RoyalPoolKey, RoyalStyleItem[]> = {
   femaleHair: [
-    { name: '蓮華髮髻', chance: 1.5, itemId: 64510, region: 'TWMS', version: '256', image: '/royal-84116/female-hair-1.png' },
-    { name: '溫暖辮子', chance: 1.5, itemId: 47910, region: 'TWMS', version: '256', image: '/royal-84116/female-hair-2.png' },
-    { name: '黑髮櫻桃棒棒糖', chance: 6.0, itemId: 64580, region: 'TWMS', version: '256', image: '/royal-84116/female-hair-3.png' },
-    { name: '黑髮優雅女神', chance: 6.0, itemId: 47740, region: 'TWMS', version: '256', image: '/royal-84116/female-hair-4.png' },
+    { name: '蓮華髮髻', chance: 1.5, itemId: 64510, region: 'TWMS', version: '256', image: './royal-84116/female-hair-1.png' },
+    { name: '溫暖辮子', chance: 1.5, itemId: 47910, region: 'TWMS', version: '256', image: './royal-84116/female-hair-2.png' },
+    { name: '黑髮櫻桃棒棒糖', chance: 6.0, itemId: 64580, region: 'TWMS', version: '256', image: './royal-84116/female-hair-3.png' },
+    { name: '黑髮優雅女神', chance: 6.0, itemId: 47740, region: 'TWMS', version: '256', image: './royal-84116/female-hair-4.png' },
     { name: '黑色甜蜜馬尾造型', chance: 6.0, itemId: 38100, region: 'TWMS', version: '256' },
     { name: '黑色蓬鬆束髮造型', chance: 6.0, itemId: 31360, region: 'TWMS', version: '256' },
     { name: '黑色小櫻造型', chance: 6.0, itemId: 34370, region: 'TWMS', version: '256' },
@@ -82,10 +82,10 @@ const ROYAL_POOLS: Record<RoyalPoolKey, RoyalStyleItem[]> = {
     { name: '不理人臉型', chance: 10.0, itemId: 21009, region: 'TWMS', version: '256' },
   ],
   maleHair: [
-    { name: '我也太可愛了吧', chance: 1.5, itemId: 64700, region: 'TWMS', version: '256', image: '/royal-84116/male-hair-1.png' },
-    { name: '迷你線球', chance: 1.5, itemId: 64810, region: 'TWMS', version: '256', image: '/royal-84116/male-hair-2.png' },
-    { name: '黑髮氣質', chance: 6.0, itemId: 43910, region: 'TWMS', version: '256', image: '/royal-84116/male-hair-3.png' },
-    { name: '黑髮柔軟珍珠', chance: 6.0, itemId: 45860, region: 'TWMS', version: '256', image: '/royal-84116/male-hair-4.png' },
+    { name: '我也太可愛了吧', chance: 1.5, itemId: 64700, region: 'TWMS', version: '256', image: './royal-84116/male-hair-1.png' },
+    { name: '迷你線球', chance: 1.5, itemId: 64810, region: 'TWMS', version: '256', image: './royal-84116/male-hair-2.png' },
+    { name: '黑髮氣質', chance: 6.0, itemId: 43910, region: 'TWMS', version: '256', image: './royal-84116/male-hair-3.png' },
+    { name: '黑髮柔軟珍珠', chance: 6.0, itemId: 45860, region: 'TWMS', version: '256', image: './royal-84116/male-hair-4.png' },
     { name: '黑色泡泡髮型', chance: 6.0, itemId: 40740, region: 'TWMS', version: '256' },
     { name: '黑色菁英西裝頭', chance: 6.0, itemId: 43200, region: 'TWMS', version: '256' },
     { name: '黑色優質男友造型', chance: 6.0, itemId: 35630, region: 'TWMS', version: '256' },
