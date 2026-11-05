@@ -444,10 +444,34 @@ export interface CharacterHexaMatrixStat {
   preset_hexa_stat_core_3: HexaStatCore[] | null
 }
 
-export interface FamiliarInfo {
+export interface FamiliarOption {
+  option_no: number
+  option_name: string
+  option_value: string
+}
+
+export interface FamiliarSlotItem {
+  slot_id: string
+  familiar_name: string | null
+  active_flag?: string | null
+  expire_date?: string | null
+}
+
+export interface FamiliarItemInfo {
   familiar_name: string
-  familiar_grade?: string | null
+  familiar_nickname?: string | null
+  familiar_special_flag?: string | null
+  familiar_state?: string | null
   familiar_level?: number | null
+  familiar_exp?: number | null
+  skill_name?: string | null
+  option_level?: number | null
+  option?: FamiliarOption[] | null
+  familiar_grade?: string | null
+  look_name?: string | null
+  summoned_flag?: string | null
+  slot_id?: string | null
+  // 舊版或相容欄位
   familiar_icon?: string | null
   familiar_description?: string | null
   familiar_option_1?: string | null
@@ -459,13 +483,17 @@ export interface FamiliarInfo {
   familiar_skill?: string | null
 }
 
+export type FamiliarInfo = FamiliarItemInfo
+
 export interface CharacterFamiliar {
   date: string | null
   character_class?: string | null
-  familiar?: FamiliarInfo[] | null
-  familiar_preset_1?: FamiliarInfo[] | null
-  familiar_preset_2?: FamiliarInfo[] | null
-  familiar_preset_3?: FamiliarInfo[] | null
+  familiar_link_slot?: FamiliarSlotItem[] | null
+  familiar_info?: FamiliarItemInfo[] | null
+  familiar?: FamiliarItemInfo[] | null
+  familiar_preset_1?: FamiliarItemInfo[] | null
+  familiar_preset_2?: FamiliarItemInfo[] | null
+  familiar_preset_3?: FamiliarItemInfo[] | null
 }
 
 export interface FullCharacterProfile {

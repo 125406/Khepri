@@ -1538,6 +1538,70 @@ export function getDemoCharacterProfile(region: GameRegion = 'maplestorytw'): Fu
     familiar: {
       date: '2026-11-03T00:00+08:00',
       character_class: '阿戴爾',
+      familiar_link_slot: [
+        {
+          slot_id: '1',
+          familiar_name: '巨大巴洛古',
+          active_flag: 'true',
+          expire_date: null,
+        },
+        {
+          slot_id: '2',
+          familiar_name: '露希妲',
+          active_flag: 'true',
+          expire_date: null,
+        },
+        {
+          slot_id: '3',
+          familiar_name: '西格諾斯',
+          active_flag: 'true',
+          expire_date: null,
+        },
+      ],
+      familiar_info: [
+        {
+          familiar_name: '巨大巴洛古',
+          familiar_nickname: '巨大巴洛古',
+          familiar_grade: '傳說',
+          familiar_level: 7,
+          familiar_state: 'linked',
+          slot_id: '1',
+          option: [
+            { option_no: 1, option_name: 'BOSS 怪物攻擊時傷害增加', option_value: '40%' },
+            { option_no: 2, option_name: '無視怪物防禦力', option_value: '35%' },
+            { option_no: 3, option_name: '最大 HP', option_value: '8%' },
+          ],
+          familiar_description: '散發出強大威壓感的古老魔族，擁有極高的攻擊破壞力。',
+        },
+        {
+          familiar_name: '露希妲',
+          familiar_nickname: '露希妲',
+          familiar_grade: '傳說',
+          familiar_level: 7,
+          familiar_state: 'linked',
+          slot_id: '2',
+          option: [
+            { option_no: 1, option_name: 'BOSS 怪物攻擊時傷害增加', option_value: '40%' },
+            { option_no: 2, option_name: '物理攻擊力', option_value: '9%' },
+            { option_no: 3, option_name: '魔法攻擊力', option_value: '9%' },
+          ],
+          familiar_description: '操控噩夢與幻想之蝶的軍團長，支配著夢之都拉契爾恩。',
+        },
+        {
+          familiar_name: '西格諾斯',
+          familiar_nickname: '西格諾斯',
+          familiar_grade: '傳說',
+          familiar_level: 7,
+          familiar_state: 'linked',
+          slot_id: '3',
+          option: [
+            { option_no: 1, option_name: '無視怪物防禦力', option_value: '40%' },
+            { option_no: 2, option_name: '所有屬性增加', option_value: '7%' },
+            { option_no: 3, option_name: '攻擊時有 15% 機率恢復 HP', option_value: '95' },
+          ],
+          familiar_description: '耶雷弗的女皇與神獸守護者，擁有神聖且純粹的守護光芒。',
+        },
+      ],
       familiar: [
         {
           familiar_name: '巨大巴洛古',

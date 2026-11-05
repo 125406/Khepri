@@ -945,14 +945,139 @@ const petDisplayList = computed(() => {
   })
 })
 
-// 萌獸 (Familiar) 資料轉換
+// 萌獸 (Familiar) 資料轉換：支援新版 TMS (familiar_link_slot + familiar_info) 與舊版 familiar 陣列
 const familiarDisplayList = computed(() => {
   const famData = profile.value?.familiar
   if (!famData) return []
-  const list = famData.familiar || []
-  if (list.length === 0) return []
 
-  return list.map((fam, idx) => {
+  // TMS API 格式：familiar_info 包含萌獸本體資料，familiar_link_slot 標記裝備欄位 (slot_id: "1", "2", "3", "vip")
+  const infoList = famData.familiar_info || []
+  const linkSlots = famData.familiar_link_slot || []
+  const legacyList = famData.familiar || []
+
+  // 1. 若有 TMS 專屬結構
+  if (infoList.length > 0 || linkSlots.length > 0) {
+    // 依 slot_id 建立 slot 對應表
+    const activeSlotMap = new Map<string, string>()
+    for (const slotItem of linkSlots) {
+      if (slotItem.familiar_name && slotItem.slot_id) {
+        activeSlotMap.set(String(slotItem.slot_id), slotItem.familiar_name)
+      }
+    }
+
+    // 取得所有裝備中 (linked) 或被 slot 引用的萌獸
+    const equippedFamiliars: Array<{ fam: typeof infoList[number]; slot: string }> = []
+    const usedNames = new Set<string>()
+
+    // 優先檢查 slot 1, 2, 3, vip
+    const preferredSlotIds = ['1', '2', '3', 'vip']
+    for (const sid of preferredSlotIds) {
+      const famName = activeSlotMap.get(sid)
+      if (famName) {
+        const found = infoList.find((f) => f.familiar_name === famName || f.familiar_nickname === famName)
+        if (found) {
+          equippedFamiliars.push({ fam: found, slot: sid === 'vip' ? 'VIP' : sid })
+          usedNames.add(found.familiar_name)
+        } else {
+          // 若在 info 裡沒找到對應名字，依舊建立空佔位或虛擬卡片
+          equippedFamiliars.push({
+            fam: {
+              familiar_name: famName,
+              familiar_level: 1,
+              familiar_grade: '特殊',
+            },
+            slot: sid === 'vip' ? 'VIP' : sid,
+          })
+          usedNames.add(famName)
+        }
+      }
+    }
+
+    // 若 linkSlots 沒指派，但 familiar_info 中有 familiar_state === 'linked' 或有 slot_id
+    if (equippedFamiliars.length === 0) {
+      for (const item of infoList) {
+        if (item.familiar_state === 'linked' || item.slot_id || item.summoned_flag === 'true') {
+          if (!usedNames.has(item.familiar_name)) {
+            equippedFamiliars.push({
+              fam: item,
+              slot: item.slot_id ? String(item.slot_id) : String(equippedFamiliars.length + 1),
+            })
+            usedNames.add(item.familiar_name)
+          }
+        }
+      }
+    }
+
+    // 若仍為空但 infoList 有登記萌獸，展示前 3 隻
+    const targetList =
+      equippedFamiliars.length > 0
+        ? equippedFamiliars
+        : infoList.slice(0, 3).map((f, i) => ({ fam: f, slot: String(i + 1) }))
+
+    if (targetList.length > 0) {
+      return targetList.map(({ fam, slot }) => {
+        // 格式化潛能：option 陣列 (option_name + option_value) 或舊版 familiar_option_X
+        const opts: string[] = []
+        if (fam.option && Array.isArray(fam.option)) {
+          for (const o of fam.option) {
+            if (o.option_name) {
+              const valStr = o.option_value ? ` ${o.option_value.startsWith('+') ? '' : '+'}${o.option_value}` : ''
+              opts.push(`${o.option_name}${valStr}`)
+            }
+          }
+        } else {
+          const legacyOpts = [
+            fam.familiar_option_1 || fam.option_1,
+            fam.familiar_option_2 || fam.option_2,
+            fam.familiar_option_3 || fam.option_3,
+          ].filter(Boolean) as string[]
+          opts.push(...legacyOpts)
+        }
+
+        const grade = fam.familiar_grade || (fam.familiar_special_flag === 'true' ? '特殊' : '普通')
+        const lv = fam.familiar_level || 1
+
+        const descLines: string[] = []
+        descLines.push(`階級：${grade}`)
+        descLines.push(`等級：Lv.${lv}`)
+        if (fam.skill_name || fam.familiar_skill) {
+          descLines.push(`萌獸技能：${fam.skill_name || fam.familiar_skill}`)
+        }
+        if (fam.familiar_description) {
+          descLines.push(fam.familiar_description)
+        }
+
+        const equipItem = makeEmptyEquipmentItem({
+          item_equipment_part: `萌獸 (Slot ${slot})`,
+          item_equipment_slot: `萌獸${slot}`,
+          item_name: fam.familiar_nickname || fam.familiar_name,
+          item_icon: fam.familiar_icon || makeBeautyMannequinSvg('hair'),
+          item_description: descLines.join('\n'),
+        })
+        equipItem.potential_option_grade = grade
+        equipItem.potential_option_1 = opts[0] || null
+        equipItem.potential_option_2 = opts[1] || null
+        equipItem.potential_option_3 = opts[2] || null
+
+        return {
+          slot,
+          name: fam.familiar_nickname || fam.familiar_name,
+          grade,
+          level: lv,
+          icon: fam.familiar_icon,
+          options: opts,
+          description: fam.familiar_description,
+          skill: fam.skill_name || fam.familiar_skill,
+          itemInfo: equipItem,
+        }
+      })
+    }
+  }
+
+  // 2. 舊版 / KMS / GMS 備用結構 (famData.familiar)
+  if (legacyList.length === 0) return []
+
+  return legacyList.map((fam, idx) => {
     const opts = [
       fam.familiar_option_1 || fam.option_1,
       fam.familiar_option_2 || fam.option_2,
@@ -981,7 +1106,7 @@ const familiarDisplayList = computed(() => {
     equipItem.potential_option_3 = opts[2] || null
 
     return {
-      slot: idx + 1,
+      slot: String(idx + 1),
       name: fam.familiar_name,
       grade,
       level: lv,
