@@ -117,10 +117,16 @@ export function getFamiliarIconUrl(familiarName: string | null | undefined): str
   if (!familiarName) return null
   const clean = familiarName.trim()
 
-  // 1. 完全或包含比對 MOB_ICON_MAP
-  for (const [key, filename] of Object.entries(MOB_ICON_MAP)) {
-    if (clean === key || clean.includes(key)) {
-      return `https://media.maplestorywiki.net/yetidb/${filename}`
+  // 1. 先完全相符比對 (Exact match)
+  if (MOB_ICON_MAP[clean]) {
+    return `https://media.maplestorywiki.net/yetidb/${MOB_ICON_MAP[clean]}`
+  }
+
+  // 2. 依照關鍵字由長到短排序比對 (Longest match first)，避免「肥肥」比「鋼之肥肥」先被匹配
+  const sortedKeys = Object.keys(MOB_ICON_MAP).sort((a, b) => b.length - a.length)
+  for (const key of sortedKeys) {
+    if (clean.includes(key)) {
+      return `https://media.maplestorywiki.net/yetidb/${MOB_ICON_MAP[key]}`
     }
   }
 
