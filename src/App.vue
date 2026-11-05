@@ -3851,37 +3851,6 @@ const hexaStatSlotsDisplay = computed(() => {
               </div>
             </div>
           </div>
-
-          <!-- 聯盟攻擊隊累積屬性效果 -->
-          <div v-if="profile.unionRaider?.union_occupied_stat?.length || profile.unionRaider?.union_raider_stat?.length" class="union-stats-summary-block">
-            <h4 class="sub-block-title">✨ 聯盟佔領與隊員效果總覽</h4>
-            <div class="union-stats-dual-col">
-              <div v-if="profile.unionRaider?.union_occupied_stat?.length" class="union-stats-col">
-                <h5>🗺️ 棋盤佔領效果</h5>
-                <div class="union-pill-cloud">
-                  <span
-                    v-for="(stat, sIdx) in profile.unionRaider.union_occupied_stat"
-                    :key="sIdx"
-                    class="stat-pill occupied-pill"
-                  >
-                    {{ stat }}
-                  </span>
-                </div>
-              </div>
-              <div v-if="profile.unionRaider?.union_raider_stat?.length" class="union-stats-col">
-                <h5>🛡️ 隊員固有加成效果</h5>
-                <div class="union-pill-cloud">
-                  <span
-                    v-for="(stat, sIdx) in profile.unionRaider.union_raider_stat"
-                    :key="sIdx"
-                    class="stat-pill raider-pill"
-                  >
-                    {{ stat }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
     </main>
