@@ -1,0 +1,27 @@
+services:
+  # 正式環境服務 (預設：Node 打包 + Nginx)
+  app-prod:
+    build:
+      context: .
+      target: prod
+    container_name: khepri-prod
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  # 開發環境服務 (支援 Hot Reload)
+  # 啟動方式：docker compose --profile dev up
+  app-dev:
+    build:
+      context: .
+      target: dev
+    container_name: khepri-dev
+    profiles:
+      - dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true

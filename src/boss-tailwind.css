@@ -1,0 +1,41 @@
+/*
+ * Tailwind utilities for the BOSS tier page only.
+ * - No preflight (would reset the rest of the app's hand-written styles).
+ * - Utilities are imported UNLAYERED on purpose: style.css has an unlayered
+ *   `* { margin: 0; padding: 0 }` reset which would otherwise beat layered utilities.
+ * - Only scans BossTierViewer + its data file so other pages are unaffected.
+ */
+@layer theme;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" source(none);
+
+@source "./components/BossTierViewer.vue";
+@source "./data/bossTierData.ts";
+
+/*
+ * Minimal preflight subset scoped to the boss page. Wrapped in :where() so the
+ * specificity is 0 and any Tailwind utility class still wins.
+ */
+:where(.boss-tier-container) :where(*, ::before, ::after) {
+  border: 0 solid;
+}
+:where(.boss-tier-container) :where(button, input) {
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  border-radius: 0;
+}
+:where(.boss-tier-container) :where(button) {
+  cursor: pointer;
+}
+:where(.boss-tier-container) :where(img, svg) {
+  display: block;
+  max-width: 100%;
+}
+:where(.boss-tier-container) :where(table) {
+  border-collapse: collapse;
+}
+:where(.boss-tier-container) :where(h1, h2, h3) {
+  font-size: inherit;
+  font-weight: inherit;
+}
