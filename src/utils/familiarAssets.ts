@@ -82,6 +82,9 @@ export const MOB_ICON_MAP: Record<string, string> = {
   黑食人花: 'Mob_Dark_Nependeath.png',
   幼黃獨角獅: 'Mob_Jr._Cellion.png',
   幼紅獨角獅: 'Mob_Jr._Lioner.png',
+  幼藍獨角獅: 'Mob_Jr._Grupin.png',
+  藍色獨角獅: 'Mob_Lucida.png',
+  獨角獅: 'Mob_Grupin.png',
   利提: 'Mob_Leatty.png',
   黑利提: 'Mob_Dark_Leatty.png',
   小雪球: 'Mob_Jr._Boogie.png',
@@ -102,10 +105,11 @@ export const MOB_ICON_MAP: Record<string, string> = {
   黑狼: 'Mob_Hector.png',
   狼人: 'Mob_Werewolf.png',
   白狼人: 'Mob_Lycanthrope.png',
-  藍色獨角獅: 'Mob_Lucida.png',
   海膽: 'Mob_Pinboom.png',
   刺刺海膽: 'Mob_Pinboom.png',
   泡泡魚: 'Mob_Krip.png',
+  獨角尼莫: 'Mob_Krappy.png',
+  尼莫: 'Mob_Krappy.png',
   妙妙狸: 'Mob_King_Sage_Cat.png',
   仙人掌: 'Mob_Cactus.png',
   小仙人掌: 'Mob_Jr._Cactus.png',
@@ -180,6 +184,12 @@ export const MOB_ICON_MAP: Record<string, string> = {
   點心吧: 'Mob_Snack_Bar.png',
   太倫: 'Mob_Tae_Roon.png',
   肯德熊: 'Mob_Master_Dummy.png',
+
+  // === 咖波地下城大冒險 / 聯名限定萌獸 ===
+  小雞盜賊: 'Mob_Punk_Chick.png',
+  小雞: 'Mob_Punk_Chick.png',
+  極地北極熊: 'Mob_Snowman.png',
+  海豹騎士: 'Mob_Seahorse.png',
 
   // === 奧術之河 (Arcane River) ===
   艾爾達斯: 'Mob_Raging_Erda.png',
