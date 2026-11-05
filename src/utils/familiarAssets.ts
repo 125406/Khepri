@@ -242,6 +242,8 @@ export const MOB_ICON_MAP: Record<string, string> = {
   蜘蛛阿蘭妮亞: 'Mob_Aranea.png',
   光之執行者: 'Mob_Keeper_of_Light.png',
   暗之執行者: 'Mob_Keeper_of_Darkness.png',
+  光之注視者: 'Mob_Keeper_of_Light.png',
+  暗之注視者: 'Mob_Keeper_of_Darkness.png',
 
   // === 格蘭蒂斯 (Grandis) - 賽爾尼溫 / 阿爾克斯 / 奧迪溫 / 桃源境 / 亞爾特利亞 ===
   // 桃源境 (Shangri-La)
