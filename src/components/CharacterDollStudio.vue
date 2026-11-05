@@ -330,19 +330,135 @@ const bgTheme = ref<'dark' | 'transparent' | 'pink' | 'blue'>('dark')
 const baseCharacterUrl = computed(() => {
   const baseImg = props.profile.basic.character_image
   if (!baseImg) return ''
-  const baseUrl = baseImg.split('?')[0]
-  const actOpt = ACTIONS.find((a) => a.id === currentAction.value)
-  const actParam = actOpt ? actOpt.actCode : 'A00'
-  return `${baseUrl}?action=${actParam}&emotion=${currentEmotion.value}&width=300&height=300`
+  return baseImg
 })
 
-// 試穿點裝透明圖層
+// 試穿點裝透明去背 Data URL 緩存
+const isolatedItemMap = ref<Record<string, string>>({})
+const isProcessingItems = ref<boolean>(false)
+
+// 取得 maplestory.io 基準假人素體影像 (96x96 Canvas)，用於扣除素體像素以取得純淨透明點裝
+const baseDollCache: Record<string, ImageData> = {}
+
+async function getBaseDollData(action: string): Promise<ImageData | null> {
+  if (baseDollCache[action]) return baseDollCache[action]
+  try {
+    const partsBase = [
+      { itemId: 12000, region: 'TWMS', version: '245' },
+      { itemId: 2000, region: 'TWMS', version: '245' },
+    ]
+    const url = `https://maplestory.io/api/character/${encodeURIComponent(JSON.stringify(partsBase).slice(1, -1))}/${action}/0?renderMode=1`
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.src = url
+    await new Promise((resolve, reject) => {
+      img.onload = resolve
+      img.onerror = reject
+    })
+    const c = document.createElement('canvas')
+    c.width = 96
+    c.height = 96
+    const ctx = c.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(img, 0, 0)
+    const data = ctx.getImageData(0, 0, 96, 96)
+    baseDollCache[action] = data
+    return data
+  } catch (err) {
+    console.warn('載入基準素體失敗:', err)
+    return null
+  }
+}
+
+// 動態去背：扣除素體假人，僅保留試穿的點裝（帽子、套服、武器、披風等），產生純透明 PNG Data URL
+async function isolateItem(itemId: number, action: string): Promise<string> {
+  const cacheKey = `${itemId}_${action}`
+  if (isolatedItemMap.value[cacheKey]) {
+    return isolatedItemMap.value[cacheKey]
+  }
+
+  try {
+    const baseDoll = await getBaseDollData(action)
+    const partsItem = [
+      { itemId: 12000, region: 'TWMS', version: '245' },
+      { itemId: 2000, region: 'TWMS', version: '245' },
+      { itemId: itemId, region: 'TWMS', version: '245' },
+    ]
+    const itemUrl = `https://maplestory.io/api/character/${encodeURIComponent(JSON.stringify(partsItem).slice(1, -1))}/${action}/0?renderMode=1`
+
+    const itemImg = new Image()
+    itemImg.crossOrigin = 'anonymous'
+    itemImg.src = itemUrl
+    await new Promise((resolve, reject) => {
+      itemImg.onload = resolve
+      itemImg.onerror = reject
+    })
+
+    const c = document.createElement('canvas')
+    c.width = 96
+    c.height = 96
+    const ctx = c.getContext('2d')
+    if (!ctx) return itemUrl
+    ctx.drawImage(itemImg, 0, 0)
+
+    if (baseDoll) {
+      const itemData = ctx.getImageData(0, 0, 96, 96)
+      const iData = itemData.data
+      const bData = baseDoll.data
+
+      // 若該像素與素體一致（顏色與透明度誤差在容許值內），則標記為完全透明，僅留下時裝本身
+      const tol = 5
+      for (let i = 0; i < iData.length; i += 4) {
+        if (bData[i + 3] > 0) {
+          const dr = Math.abs(iData[i] - bData[i])
+          const dg = Math.abs(iData[i + 1] - bData[i + 1])
+          const db = Math.abs(iData[i + 2] - bData[i + 2])
+          const da = Math.abs(iData[i + 3] - bData[i + 3])
+          if (dr <= tol && dg <= tol && db <= tol && da <= tol) {
+            iData[i + 3] = 0 // 將素體假人皮膚遮罩剔除為透明！
+          }
+        }
+      }
+      ctx.putImageData(itemData, 0, 0)
+    }
+
+    const dataUrl = c.toDataURL('image/png')
+    isolatedItemMap.value[cacheKey] = dataUrl
+    return dataUrl
+  } catch (err) {
+    console.warn('提取透明點裝失敗，回退至默認圖層:', err)
+    return `https://maplestory.io/api/gms/250/character/2000/${itemId}/${action}/0`
+  }
+}
+
+// 監聽 triedItems 與 currentAction，自動解析並緩存透明去背圖層
+watch(
+  [triedItems, currentAction],
+  async () => {
+    if (triedItems.value.length === 0) return
+    isProcessingItems.value = true
+    try {
+      for (const item of triedItems.value) {
+        const key = `${item.id}_${currentAction.value}`
+        if (!isolatedItemMap.value[key]) {
+          await isolateItem(item.id, currentAction.value)
+        }
+      }
+    } finally {
+      isProcessingItems.value = false
+    }
+  },
+  { immediate: true, deep: true }
+)
+
+// 試穿點裝純透明疊加層 (保證不會覆蓋原角色的臉型、髮型與真實外觀)
 const overlayItemUrls = computed(() => {
   return triedItems.value.map((item) => {
+    const key = `${item.id}_${currentAction.value}`
     return {
       id: item.id,
       name: item.name,
-      url: `https://maplestory.io/api/gms/250/character/2000/${item.id}/${currentAction.value}/0`,
+      url: isolatedItemMap.value[key] || '',
     }
   })
 })
@@ -450,17 +566,19 @@ async function downloadAvatar() {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
 
-  canvas.width = 500
-  canvas.height = 500
+  canvas.width = 384
+  canvas.height = 384
+  ctx.imageSmoothingEnabled = false
 
   const baseImg = new Image()
   baseImg.crossOrigin = 'anonymous'
   baseImg.src = baseCharacterUrl.value
 
   baseImg.onload = async () => {
-    ctx.drawImage(baseImg, 100, 100, 300, 300)
+    ctx.drawImage(baseImg, 0, 0, 384, 384)
 
     for (const overlay of overlayItemUrls.value) {
+      if (!overlay.url) continue
       try {
         const itemImg = new Image()
         itemImg.crossOrigin = 'anonymous'
@@ -469,7 +587,7 @@ async function downloadAvatar() {
           itemImg.onload = resolve
           itemImg.onerror = resolve
         })
-        ctx.drawImage(itemImg, 100, 100, 300, 300)
+        ctx.drawImage(itemImg, 0, 0, 384, 384)
       } catch {
         // continue
       }
@@ -935,8 +1053,8 @@ watch(
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 130px;
-  height: 130px;
+  width: 96px;
+  height: 96px;
   transform-origin: center center;
   z-index: 5;
   transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -944,8 +1062,10 @@ watch(
 
 .avatar-base-layer {
   position: absolute;
-  max-width: 130px;
-  max-height: 130px;
+  top: 0;
+  left: 0;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.55));
@@ -954,8 +1074,10 @@ watch(
 
 .avatar-item-overlay-layer {
   position: absolute;
-  max-width: 130px;
-  max-height: 130px;
+  top: 0;
+  left: 0;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
   image-rendering: pixelated;
   z-index: 6;
